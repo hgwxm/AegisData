@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN" :class="themeClass">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AegisData · 智能财务审计平台</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    [v-cloak] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="app" v-cloak>
+    
+    <!-- ===== 1. 行业选择页 ===== -->
+    <div v-if="currentPage === 'select-industry'" class="industry-layout">
+      <div class="brand-header">
+        <div class="logo-combo">
+          <svg viewBox="0 0 200 240" class="perfect-logo" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="leftGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#1a3c89" /><stop offset="50%" stop-color="#2d5db2" /><stop offset="100%" stop-color="#6598d9" />
+              </linearGradient>
+              <linearGradient id="rightGrad" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#2d7db2" /><stop offset="50%" stop-color="#48c7d9" /><stop offset="100%" stop-color="#16d0c3" />
+              </linearGradient>
+            </defs>
+            <path d="M 100 15 C 50 15, 15 60, 15 110 C 15 170, 60 220, 100 220 C 70 195, 45 160, 45 110 C 45 60, 75 30, 100 15 Z" fill="url(#leftGrad)" />
+            <path d="M 100 25 C 150 25, 185 70, 185 120 C 185 180, 140 225, 100 225 C 130 200, 155 165, 155 120 C 155 70, 125 40, 100 25 Z" fill="url(#rightGrad)" />
+            <path d="M 20 140 C 50 190, 150 190, 180 140 C 150 210, 50 210, 20 140 Z" fill="#e6f0f9" opacity="0.8" />
+            <path d="M 35 55 C 60 25, 140 25, 165 55 C 140 35, 60 35, 35 55 Z" fill="#e6f0f9" opacity="0.6" />
+          </svg>
+          <h1 class="perfect-title">Aegis<span>Data</span></h1>
+        </div>
+        <p class="subtitle">请选择您要审计的行业领域</p>
+      </div>
+      
+      <div class="industry-grid">
+        <div 
+          v-for="(ind, index) in industries" 
+          :key="ind.name"
+          class="industry-card"
+          :style="{ animationDelay: (index * 0.05) + 's' }"
+          @click="selectIndustry(ind)"
+        >
+          <div class="card-icon">{{ ind.icon }}</div>
+          <div class="card-name">{{ ind.name }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 2. 登录页 ===== -->
+    <div v-if="currentPage === 'login'" class="login-layout">
+      <div class="brand-panel">
+        <div class="brand-content">
+          <div class="brand-logo">
+            <svg viewBox="0 0 200 240" class="small-logo" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="leftGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#1a3c89" /><stop offset="100%" stop-color="#6598d9" />
+                </linearGradient>
+                <linearGradient id="rightGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#2d7db2" /><stop offset="100%" stop-color="#16d0c3" />
+                </linearGradient>
+              </defs>
+              <path d="M 100 15 C 50 15, 15 60, 15 110 C 15 170, 60 220, 100 220 C 70 195, 45 160, 45 110 C 45 60, 75 30, 100 15 Z" fill="url(#leftGrad2)" />
+              <path d="M 100 25 C 150 25, 185 70, 185 120 C 185 180, 140 225, 100 225 C 130 200, 155 165, 155 120 C 155 70, 125 40, 100 25 Z" fill="url(#rightGrad2)" />
+              <path d="M 20 140 C 50 190, 150 190, 180 140 C 150 210, 50 210, 20 140 Z" fill="#e6f0f9" opacity="0.8" />
+            </svg>
+            <span class="brand-name">Aegis<span>Data</span></span>
+          </div>
+          <p class="brand-subtitle">智能财务审计平台</p>
+          <div class="deco-lines"><span></span><span></span><span></span></div>
+        </div>
+        <div class="brand-footer">© 2026 AegisData Teams · 华为ICT大赛国赛</div>
+      </div>
+
+      <div class="form-panel">
+        <div class="form-card">
+          <div class="form-header">
+            <a href="#" class="back-link" @click.prevent="currentPage = 'select-industry'">← 重新选择</a>
+            <span class="current-ind">当前：{{ selectedIndustry.name }}</span>
+          </div>
+          <div class="field">
+            <label>账号</label>
+            <input v-model="loginAccount" type="text" placeholder="请输入登录账号" @keyup.enter="handleLogin" />
+          </div>
+          <div class="field">
+            <label>密码</label>
+            <input v-model="password" type="password" placeholder="请输入密码" @keyup.enter="handleLogin" />
+          </div>
+          <p class="error-msg" v-if="errorMsg">{{ errorMsg }}</p>
+          <button class="btn-login" :disabled="logging" @click="handleLogin">
+            {{ logging ? '登录中…' : '登 录' }}
+          </button>
+          <p class="register-link">还没有账号？<a href="#" @click.prevent="showToast('注册功能暂未开放')">立即注册</a></p>
+        </div>
+        <div class="form-footer">© 2026 AegisData Teams · 华为ICT大赛国赛</div>
+      </div>
+    </div>
+
+    <!-- ===== 3. 主界面 ===== -->
+    <div v-else-if="currentPage === 'main'" class="main-layout">
+      
+      <aside class="sidebar" style="display: flex; flex-direction: column; height: 100vh;">
+        <div class="sidebar-logo">
+          <svg viewBox="0 0 200 240" style="width: 24px; height: 28px;" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="logoGradL" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#1a3c89" /><stop offset="100%" stop-color="#6598d9" />
+              </linearGradient>
+              <linearGradient id="logoGradR" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#2d7db2" /><stop offset="100%" stop-color="#16d0c3" />
+              </linearGradient>
+            </defs>
+            <path d="M 100 15 C 50 15, 15 60, 15 110 C 15 170, 60 220, 100 220 C 70 195, 45 160, 45 110 C 45 60, 75 30, 100 15 Z" fill="url(#logoGradL)" />
+            <path d="M 100 25 C 150 25, 185 70, 185 120 C 185 180, 140 225, 100 225 C 130 200, 155 165, 155 120 C 155 70, 125 40, 100 25 Z" fill="url(#logoGradR)" />
+          </svg>
+          <span class="sidebar-title">AegisData</span>
+        </div>
+
+        <div class="new-project-btn" @click="showNewProjectModal = true">
+          <span>+</span> 新建审计项目
+        </div>
+        
+        <div class="project-list-wrapper">
+          <div v-if="currentProject" style="margin-bottom: 16px;">
+            <div class="project-list-title" style="color: var(--primary);">当前项目</div>
+            <div class="nav-item active" @click="currentProject = currentProject">
+              <span class="nav-icon">📌</span> 
+              <span class="project-name">{{ currentProject.name }}</span>
+            </div>
+          </div>
+          <div class="project-group">
+            <div class="project-list-title">本月项目</div>
+            <div class="nav-item" v-for="proj in monthlyProjects" :key="proj.id" @click="currentProject = proj; resetWorkflow()" :class="{ active: currentProject && currentProject.id === proj.id && false }">
+              <span class="nav-icon">📁</span> 
+              <span class="project-name">{{ proj.name }}</span>
+            </div>
+          </div>
+          <div class="project-group">
+            <div class="project-list-title">历史项目</div>
+            <div class="nav-item" v-for="proj in historyProjects" :key="proj.id" @click="currentProject = proj; resetWorkflow()" :class="{ active: currentProject && currentProject.id === proj.id && false }">
+              <span class="nav-icon">🗂️</span> 
+              <span class="project-name">{{ proj.name }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-bottom-modules">
+          <!-- 左下角用户信息（独立菜单） -->
+          <div class="sidebar-user-info-wrapper" v-click-outside="closeLeftUserMenu" @click.stop>
+            <div class="sidebar-user-info" @click="showLeftUserMenu = !showLeftUserMenu" style="cursor: pointer;">
+              <div class="sui-avatar">
+                <img v-if="userAvatar" :src="userAvatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />
+                <span v-else>{{ nickname.charAt(0).toUpperCase() }}</span>
+              </div>
+              <div class="sui-detail">
+                <div class="sui-name">{{ nickname }}</div>
+                <div class="sui-role">高级审计师</div>
+              </div>
+            </div>
+
+            <!-- 左下角弹出的菜单 -->
+            <div class="user-dropdown left-dropdown" v-if="showLeftUserMenu">
+              <div class="dropdown-header">
+                <div class="dropdown-avatar">
+                   <img v-if="userAvatar" :src="userAvatar" alt="avatar" />
+                   <span v-else>{{ nickname.charAt(0).toUpperCase() }}</span>
+                </div>
+                <div class="dropdown-info">
+                  <div class="dd-name">{{ nickname }}</div>
+                  <div class="dd-email">{{ loginAccount }}</div>
+                </div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-item" @click="openSettings">
+                <span class="dd-icon">⚙️</span> 个人设置
+              </div>
+              <div class="dropdown-item" @click="showStatusModal = true; showLeftUserMenu = false">
+                <span class="dd-icon">📊</span> 系统与资源状态
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-item logout-item" @click="logout">
+                <span class="dd-icon">🚪</span> 退出登录
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="main-content">
+        <header class="top-header">
+          <div class="header-title" style="display: flex; align-items: center; gap: 12px;">
+            <h2 v-if="currentProject">{{ currentProject.name }}</h2>
+            <h2 v-else>请选择或新建一个项目</h2>
+            <span class="industry-badge">{{ selectedIndustry.name }}</span>
+          </div>
+          
+          <div class="header-actions">
+            <div class="notification-bell" @click="showMessagesModal = true" title="消息通知">
+              <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <span class="bell-badge"></span>
+            </div>
+
+            <div class="user-profile-wrapper" v-click-outside="closeUserMenu">
+              <div class="user-profile" @click="showUserMenu = !showUserMenu">
+                <div class="avatar">
+                  <img v-if="userAvatar" :src="userAvatar" alt="avatar" />
+                  <span v-else>{{ nickname.charAt(0).toUpperCase() }}</span>
+                </div>
+                <span class="user-name">{{ nickname }}</span>
+              </div>
+              
+              <div class="user-dropdown" v-if="showUserMenu">
+                <div class="dropdown-header">
+                  <div class="dropdown-avatar">
+                     <img v-if="userAvatar" :src="userAvatar" alt="avatar" />
+                     <span v-else>{{ nickname.charAt(0).toUpperCase() }}</span>
+                  </div>
+                  <div class="dropdown-info">
+                    <div class="dd-name">{{ nickname }}</div>
+                    <div class="dd-email">{{ loginAccount }}</div>
+                  </div>
+                </div>
+                <div class="dropdown-tags">
+                  <span class="tag-role">高级审计师</span>
+                  <span class="tag-team">华为 ICT 赛区</span>
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-item" @click="openSettings">
+                  <span class="dd-icon">⚙️</span> 个人设置
+                </div>
+                <div class="dropdown-item" @click="showStatusModal = true; showUserMenu = false">
+                  <span class="dd-icon">📊</span> 系统与资源状态
+                </div>
+                <div class="dropdown-item" @click="showToast('反馈已记录')">
+                  <span class="dd-icon">❓</span> 帮助与反馈
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-footer">
+                  <span>v1.0.0-beta</span>
+                  <span>华为云 MaaS 驱动</span>
+                </div>
+                <div class="dropdown-item logout-item" @click="logout">
+                  <span class="dd-icon">🚪</span> 退出登录
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div v-if="currentProject" class="workflow-container">
+          <div class="workflow-steps">
+            <div class="step" :class="{ active: currentStep >= 1, done: currentStep > 1 }">
+              <div class="step-icon">1</div>
+              <div class="step-text">
+                <div class="step-name">数据上传</div>
+                <div class="step-desc">导入财务凭证/报表</div>
+              </div>
+            </div>
+            <div class="step-line" :class="{ active: currentStep > 1 }"></div>
+            <div class="step" :class="{ active: currentStep >= 2, done: currentStep > 2 }">
+              <div class="step-icon">2</div>
+              <div class="step-text">
+                <div class="step-name">AI 分析</div>
+                <div class="step-desc">大模型风险排查</div>
+              </div>
+            </div>
+            <div class="step-line" :class="{ active: currentStep > 2 }"></div>
+            <div class="step" :class="{ active: currentStep >= 3 }">
+              <div class="step-icon">3</div>
+              <div class="step-text">
+                <div class="step-name">结果产出</div>
+                <div class="step-desc">生成审计报告</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="workspace-panel">
+          <div v-if="!currentProject" class="empty-state">
+            <div style="font-size: 48px; margin-bottom: 16px;">📂</div>
+            <h3>暂无进行中的项目</h3>
+            <p>请在左侧新建一个审计项目，或选择一个已有项目继续。</p>
+          </div>
+
+          <template v-else>
+            <div v-if="currentStep === 1" class="panel-box" @click="startAIAnalysis">
+              <div class="upload-area">
+                <div class="upload-icon">📄</div>
+                <h3>点击或拖拽文件到此处上传</h3>
+                <p>支持 Excel (.xlsx), CSV, PDF 等财务审计格式</p>
+                <button class="btn-primary">模拟上传文件</button>
+              </div>
+            </div>
+
+            <div v-if="currentStep === 2" class="panel-box" style="cursor: default;">
+              <div class="upload-area" style="width: 100%; max-width: 500px;">
+                <div class="upload-icon" :style="aiAnalysisComplete ? '' : 'animation: pulse 1.5s infinite;'">
+                  {{ aiAnalysisComplete ? '✅' : '🧠' }}
+                </div>
+                <h3>{{ aiAnalysisComplete ? 'AI 分析完成' : 'AI 正在全量扫描数据...' }}</h3>
+                <p style="margin-bottom: 24px;">
+                  <span v-if="!aiAnalysisComplete" style="color: var(--primary); font-weight: bold;">
+                    耗时：{{ aiElapsedTime }} 秒
+                  </span>
+                  <span v-else style="color: #52c41a; font-weight: bold;">
+                    分析完成，总耗时 {{ aiElapsedTime }} 秒
+                  </span>
+                </p>
+                
+                <div class="ai-steps-list">
+                  <div class="ai-step-item" v-for="(task, index) in aiTasks" :key="index" :class="{ 'done': task.done, 'active': !task.done && index === activeAiTaskIndex }">
+                    <span class="step-status">
+                      <span v-if="task.done">✓</span>
+                      <span v-else-if="index === activeAiTaskIndex" class="loading-spinner"></span>
+                      <span v-else>○</span>
+                    </span>
+                    {{ task.text }}
+                  </div>
+                </div>
+
+                <button class="btn-primary" style="margin-top: 30px;" :disabled="!aiAnalysisComplete" @click="currentStep = 3">
+                  {{ aiAnalysisComplete ? '查看分析报告' : '分析中...' }}
+                </button>
+              </div>
+            </div>
+
+            <div v-if="currentStep === 3" class="panel-box" style="flex-direction: column; cursor: default; align-items: stretch; padding: 24px; border: none; background: transparent;">
+              
+              <div class="report-header" style="margin-bottom: 20px;">
+                <div>
+                  <h3 style="font-size: 20px; margin-bottom: 6px; font-weight: 700;">审计报告已生成</h3>
+                  <p style="font-size: 14px; color: var(--text-sub);">本季度共解析 <strong>2,450</strong> 笔流水，发现 <strong style="color:#e5484d;">12 笔高危异常</strong>，综合风险得分 <strong style="color:#e5484d; font-size: 16px;">92/100</strong></p>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                  <button class="action-btn secondary-btn" @click="resetWorkflow">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                    重新审计
+                  </button>
+                  <button class="action-btn primary-btn" @click="showToast('报告已开始下载')">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    下载完整报告
+                  </button>
+                </div>
+              </div>
+
+              <div class="result-split-layout" style="height: 380px; gap: 20px;">
+                <div class="receipt-panel" style="flex: 0 0 320px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column;">
+                  <div class="panel-title" style="margin-bottom: 16px; font-size: 15px; color: var(--text-main);">
+                    <span>📄</span> 高危凭证抽样核验 <span style="font-size: 12px; color: var(--text-light); font-weight: normal; margin-left: 6px;">(共 12 笔，展示前 3)</span>
+                  </div>
+                  
+                  <div class="receipt-thumbs">
+                    <div class="thumb-item" v-for="(v, index) in getIndustryData().vouchers" :key="index" :class="{ active: activeReceipt === index }" @click="activeReceipt = index">
+                      <div class="thumb-icon" :style="{ color: v.status === 'danger' ? '#e5484d' : '#52c41a' }">{{ v.status === 'danger' ? '🧾' : '📦' }}</div>
+                      <div class="thumb-label">凭证 {{ index + 1 }}</div>
+                    </div>
+                  </div>
+
+                  <div class="receipt-detail-box">
+                    <div class="rd-row"><span>凭证类型：</span><strong>{{ getIndustryData().vouchers[activeReceipt].type }}</strong></div>
+                    <div class="rd-row"><span>交易方：</span><strong>{{ getIndustryData().vouchers[activeReceipt].company }}</strong></div>
+                    <div class="rd-row"><span>发生日期：</span><strong>{{ getIndustryData().vouchers[activeReceipt].date }}</strong></div>
+                    <div class="rd-row"><span>票面金额：</span><strong class="amount">{{ getIndustryData().vouchers[activeReceipt].amount }}</strong></div>
+                    
+                    <div class="rd-status" :class="getIndustryData().vouchers[activeReceipt].status === 'pass' ? 'pass' : 'danger'">
+                      AI 判定：{{ getIndustryData().vouchers[activeReceipt].reason }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="chart-panel" style="flex: 1; background: linear-gradient(135deg, #e0f0ff 0%, #f2f8ff 100%); border: 1px solid #bae0ff; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; overflow: hidden;">
+                  <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: rgba(22,119,255,0.05); border-radius: 50%;"></div>
+                  <div style="position: absolute; bottom: -60px; left: -40px; width: 150px; height: 150px; background: rgba(22,119,255,0.08); border-radius: 50%;"></div>
+
+                  <div style="font-size: 56px; margin-bottom: 16px; filter: drop-shadow(0 8px 16px rgba(22,119,255,0.2));">📊</div>
+                  <h3 style="font-size: 20px; font-weight: 700; color: #10233f; margin-bottom: 12px; z-index: 1;">AI 数据关联与可视化洞察</h3>
+                  <p style="color: #4b6485; text-align: center; font-size: 14px; line-height: 1.6; margin-bottom: 24px; z-index: 1;">
+                    系统已自动针对“{{ selectedIndustry.name }}”行业特征，<br>生成了年度风险监控可视化大屏。
+                  </p>
+                  
+                  <button class="btn-glow" @click="showChartModal = true; renderModalCharts()">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"></path></svg>
+                    一键展开可视化数据大屏
+                  </button>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 4. 新建项目弹窗 ===== -->
+    <div v-if="showNewProjectModal" class="modal-overlay">
+      <div class="modal-content">
+        <h3>新建审计项目</h3>
+        <div class="field">
+          <label>项目名称</label>
+          <input v-model="newProjectName" type="text" placeholder="例如：2025年度财务合规审计" @keyup.enter="createProject" />
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" @click="showNewProjectModal = false">取消</button>
+          <button class="btn-primary" @click="createProject">创建并进入</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 5. 个人设置弹窗 ===== -->
+    <div v-if="showSettingsModal" class="modal-overlay">
+      <div class="modal-content settings-layout-modal">
+        <div class="settings-sidebar">
+          <h3>个人设置</h3>
+          <div class="settings-nav-item" :class="{ active: settingsTab === 'profile' }" @click="settingsTab = 'profile'">👤 基本资料</div>
+          <div class="settings-nav-item" :class="{ active: settingsTab === 'security' }" @click="settingsTab = 'security'">🔒 账号安全</div>
+          <div class="settings-nav-item" :class="{ active: settingsTab === 'preferences' }" @click="settingsTab = 'preferences'">🎨 偏好设置</div>
+        </div>
+        <div class="settings-content">
+          <div v-if="settingsTab === 'profile'">
+            <div class="setting-item">
+              <label>登录账号 <span style="font-size:12px; color:#98a6b3; font-weight:normal;">(系统唯一标识，不可修改)</span></label>
+              <input type="text" :value="loginAccount" disabled class="input-disabled" />
+            </div>
+            <div class="setting-item">
+              <label>所属行业</label>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" :value="selectedIndustry.name" disabled class="input-disabled" style="flex: 1;" />
+                <button class="btn-secondary" style="padding: 0 16px; height: 42px;" @click="showSettingsModal = false; currentPage = 'select-industry'">切换行业</button>
+              </div>
+            </div>
+            <div class="setting-item">
+              <label>用户昵称</label>
+              <input v-model="editNickname" type="text" placeholder="请输入您的显示昵称" />
+            </div>
+            <div class="setting-item">
+              <label>更换头像</label>
+              <div class="avatar-upload-row">
+                <div class="avatar-preview">
+                  <img v-if="editAvatar" :src="editAvatar" alt="preview" />
+                  <span v-else>预览</span>
+                </div>
+                <input type="file" accept="image/*" @change="handleAvatarUpload" class="file-input" />
+              </div>
+            </div>
+          </div>
+          <div v-if="settingsTab === 'security'">
+            <div class="setting-item">
+              <label>原密码</label>
+              <input v-model="oldPassword" type="password" placeholder="请输入当前密码" />
+            </div>
+            <div class="setting-item">
+              <label>新密码</label>
+              <input v-model="newPassword" type="password" placeholder="请输入新密码 (至少6位)" />
+            </div>
+            <div class="setting-item">
+              <label>确认新密码</label>
+              <input v-model="confirmPassword" type="password" placeholder="请再次输入新密码" />
+            </div>
+          </div>
+          <div v-if="settingsTab === 'preferences'">
+            <div class="setting-item">
+              <label>界面主题</label>
+              <p style="font-size:12px; color:var(--text-sub); margin-bottom: 12px;">选择适合您的界面主题，保护您的视力。</p>
+              <div class="theme-options">
+                <div class="theme-card" :class="{ active: currentTheme === 'light' }" @click="currentTheme = 'light'">
+                  <div class="theme-preview light-preview"></div>
+                  <span>浅色模式</span>
+                </div>
+                <div class="theme-card" :class="{ active: currentTheme === 'dark' }" @click="currentTheme = 'dark'">
+                  <div class="theme-preview dark-preview"></div>
+                  <span>深色模式</span>
+                </div>
+                <div class="theme-card" :class="{ active: currentTheme === 'eye' }" @click="currentTheme = 'eye'">
+                  <div class="theme-preview eye-preview"></div>
+                  <span>护眼模式</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="settings-footer">
+          <button class="btn-secondary" @click="showSettingsModal = false">取消</button>
+          <button class="btn-primary" @click="saveSettings">保存设置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 6. 系统与资源状态弹窗 ===== -->
+    <div v-if="showStatusModal" class="modal-overlay">
+      <div class="modal-content">
+        <h3>系统与资源状态</h3>
+        <div class="setting-item" style="margin-top: 16px;">
+          <div class="sidebar-card ai-status-card" style="background: var(--bg-page); padding: 16px;">
+            <div class="ai-dot"></div>
+            <div class="ai-text">
+              <div class="ai-title">MaaS 模型已就绪</div>
+              <div class="ai-desc">当前连接：华为云 AI 引擎 (正常)</div>
+            </div>
+          </div>
+        </div>
+        <div class="setting-item">
+          <div class="sidebar-card resource-card" style="background: var(--bg-page); padding: 16px;">
+            <div class="resource-header" style="margin-bottom: 12px;">
+              <span>本月 AI 解析额度</span>
+              <span class="resource-val">78% 剩余</span>
+            </div>
+            <div class="resource-bar" style="height: 10px;">
+              <div class="resource-fill" style="width: 78%;"></div>
+            </div>
+            <p style="font-size: 12px; color: var(--text-light); margin-top: 8px;">* 下月 1 日将恢复 100% 额度</p>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-primary" @click="showStatusModal = false">知道了</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 7. 消息通知弹窗 ===== -->
+    <div v-if="showMessagesModal" class="modal-overlay">
+      <div class="modal-content messages-modal">
+        <div class="messages-header">
+          <h3>消息通知</h3>
+          <span class="close-btn" @click="showMessagesModal = false">✕</span>
+        </div>
+        <div class="messages-list">
+          <div class="message-item unread">
+            <div class="msg-icon">🤖</div>
+            <div class="msg-content">
+              <div class="msg-title">AI 审计分析报告已生成</div>
+              <div class="msg-desc">项目《2025 年度财务合规审计》的 AI 分析已完成，发现 12 处异常。</div>
+              <div class="msg-time">10 分钟前</div>
+            </div>
+          </div>
+          <div class="message-item">
+            <div class="msg-icon">📁</div>
+            <div class="msg-content">
+              <div class="msg-title">新项目分配</div>
+              <div class="msg-desc">系统管理员为您分配了《Q3 供应商结算专项审计》项目。</div>
+              <div class="msg-time">2 小时前</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 8. 可视化数据大屏弹窗 ===== -->
+    <div v-if="showChartModal" class="modal-overlay" style="background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);">
+      <div class="chart-modal-content" style="position: relative;">
+        <div class="chart-modal-header">
+          <h2>📊 AegisData 智能审计数据洞察大屏</h2>
+          <span class="close-btn" style="font-size: 24px;" @click="showChartModal = false">✕</span>
+        </div>
+        
+        <div class="chart-modal-body">
+          <div class="dash-card large-chart">
+            <div class="dash-title">全年异常金额波动趋势</div>
+            <div id="modalChart1" style="width: 100%; height: 260px;"></div>
+          </div>
+          <div class="dash-card large-chart">
+            <div class="dash-title">高风险供应商异常金额 (Top 5)</div>
+            <div id="modalChart2" style="width: 100%; height: 260px;"></div>
+          </div>
+          <div class="dash-card full-width-chart">
+            <div class="dash-title">风险类型占比分析</div>
+            <div id="modalChart3" style="width: 100%; height: 220px;"></div>
+          </div>
+        </div>
+
+        <!-- 底部导出操作区 -->
+        <div class="chart-modal-footer">
+          <span style="font-size: 13px; color: var(--text-sub);">将生成包含 3 张高清图表的压缩包</span>
+          <button class="action-btn primary-btn" :disabled="isExporting" @click="exportChartsToZip">
+            <svg v-if="!isExporting" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            {{ isExporting ? '打包生成中...' : '一键导出图表压缩包' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div class="toast" v-if="toastMsg">{{ toastMsg }}</div>
+
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
