@@ -15,14 +15,24 @@ createApp({
     // ===== 页面状态 =====
     const currentPage = ref('select-industry');
     const industries = ref([
-      { name: '制造业', icon: '🏭' }, { name: '金融业', icon: '🏦' },
-      { name: '信息技术', icon: '💻' }, { name: '批发零售', icon: '🛒' },
-      { name: '能源化工', icon: '⚡' }, { name: '医疗健康', icon: '🏥' },
-      { name: '建筑地产', icon: '🏗️' }, { name: '交通运输', icon: '🚚' },
-      { name: '教育文化', icon: '🎓' }, { name: '农业食品', icon: '🌾' }
-    ]);
+  { name: '制造业', icon: '🏭' },
+  { name: '金融业', icon: '🏦' },
+  { name: '信息技术', icon: '💻' },
+  { name: '批发零售', icon: '🛒' },
+  { name: '能源化工', icon: '⚡' },
+  { name: '医疗健康', icon: '🏥' },
+  { name: '建筑地产', icon: '🏗️' },
+  { name: '交通运输', icon: '🚚' },
+  { name: '教育文化', icon: '🎓' },
+  { name: '农业食品', icon: '🌾' },
+  { name: '餐饮住宿', icon: '🍜' },
+  { name: '文体娱乐', icon: '🎬' },
+  { name: '公共管理', icon: '🏛️' },
+  { name: '科学研究', icon: '🔬' },
+  { name: '居民服务', icon: '🧰' }
+]);
     const selectedIndustry = ref({ name: '' });
-    const nickname = ref('管理员');
+    const nickname = ref('普通用户');
     const showUserMenu = ref(false);
     const showLeftUserMenu = ref(false);
     const currentProject = ref(null);
@@ -153,7 +163,7 @@ createApp({
       { key: 'sessions', label: '登录记录', icon: '📱' },
       { key: 'appearance', label: '外观设置', icon: '🎨' }
     ];
-    const editNickname = ref('管理员');
+    const editNickname = ref('普通用户');
     const editGender = ref('男');
     const editBirthday = ref('1990-01-01');
     const editEmail = ref('admin@aegisdata.com');
