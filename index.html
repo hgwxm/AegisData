@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AegisData · 智能财务审计平台</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    [v-cloak] { display: none !important; }
+    html, body { margin: 0; padding: 0; height: 100%; background: #f4f6fa; }
+    .main-layout { display: flex; flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; }
+    .top-header { height: 64px; background: #ffffff; border-bottom: 1px solid #e6ebf2; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; flex-shrink: 0; }
+    .shell { display: flex; flex: 1; overflow: hidden; }
+    .sidebar { width: 300px; background: #ffffff; border-right: 1px solid #e6ebf2; display: flex; flex-direction: column; flex-shrink: 0; } 
+    .main { flex: 1; overflow-y: auto; padding: 32px; } 
+    .content-wrapper { max-width: 1100px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 24px; }
+    .workflow-steps { display: flex; align-items: center; justify-content: space-between; max-width: 1000px; margin: 0 auto; }
+    .step { display: flex; align-items: center; gap: 12px; opacity: 0.4; transition: 0.3s; }
+    .step.active { opacity: 1; }
+    .step.done { opacity: 0.8; }
+    .step-icon { width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; color: #8894a8; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+    .step.active .step-icon { background: #1d4ed8; color: #fff; box-shadow: 0 0 0 4px rgba(29,78,216,0.15); }
+    .step.done .step-icon { background: #12b76a; color: #fff; }
+    .step-name { font-size: 15px; font-weight: 600; color: #0f1e35; }
+    .step-desc { font-size: 12.5px; color: #8894a8; }
+    .step-line { flex: 1; height: 2px; background: #e6ebf2; margin: 0 20px; }
+    .step-line.active { background: #1d4ed8; }
+    .panel-box { background: #ffffff; border: 1px dashed #e6ebf2; border-radius: 13px; padding: 40px; display: flex; align-items: center; justify-content: center; min-height: 400px; }
+    .upload-area { text-align: center; width: 100%; max-width: 600px; }
+    .upload-icon { font-size: 48px; margin-bottom: 16px; }
+    .card { background: #ffffff; border: 1px solid #e6ebf2; border-radius: 13px; padding: 24px; box-shadow: 0 1px 3px rgba(16,24,40,.06); }
+    .table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .table th { padding: 12px 14px; font-size: 13px; font-weight: 600; color: #8894a8; text-align: left; background: #f8fafc; border-bottom: 1px solid #e6ebf2; }
+    .table td { padding: 12px 14px; border-bottom: 1px solid #eef2f7; color: #4a5a72; }
+    .table tbody tr:hover { background: #fafcff; }
+    .tag { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+    .tag--deny { color: #b42318; background: #fdecea; border: 1px solid #f7c9c4; }
+    .tag--pending { color: #b25e09; background: #fdf4e4; border: 1px solid #f5ddb2; }
+    .tag--allow { color: #067647; background: #e7f7ef; border: 1px solid #b5e3cb; }
+    .btn-primary { background: #1d4ed8; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; border: none; cursor: pointer; transition: 0.2s; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-secondary { background: #f1f5f9; color: #0f1e35; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; border: 1px solid #e6ebf2; cursor: pointer; transition: 0.2s; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .logo-img { height: 64px; width: auto; max-width: 260px; object-fit: contain; display: block; }
+    .logo-img-sm { height: 38px; width: auto; max-width: 180px; object-fit: contain; display: block; }
+    .logo-img-xs { height: 32px; width: auto; max-width: 160px; object-fit: contain; display: block; }
+    .avatar-uploader { position: relative; width: 84px; height: 84px; border-radius: 50%; overflow: hidden; cursor: pointer; border: 2px dashed #d0d7e2; transition: 0.2s; }
+    .avatar-uploader:hover { border-color: #1d4ed8; }
+    .avatar-uploader img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-mask { position: absolute; inset: 0; background: rgba(15,30,53,0.55); color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s; }
+    .avatar-uploader:hover .avatar-mask { opacity: 1; }
+    .form-row { margin-bottom: 18px; }
+    .form-label { display: block; font-size: 13px; font-weight: 600; color: #4a5a72; margin-bottom: 7px; }
+    .form-label .req { color: #e5484d; }
+    .form-input { width: 100%; height: 42px; padding: 0 12px; border: 1px solid #e6ebf2; border-radius: 8px; background: #fff; font-size: 14px; color: #0f1e35; outline: none; transition: border .2s; box-sizing: border-box; }
+    .form-input:focus { border-color: #1d4ed8; box-shadow: 0 0 0 3px rgba(29,78,216,0.1); }
+    .form-input:disabled { background: #f8fafc; color: #8894a8; }
+    .form-select { width: 100%; height: 42px; padding: 0 12px; border: 1px solid #e6ebf2; border-radius: 8px; background: #fff; font-size: 14px; color: #0f1e35; outline: none; box-sizing: border-box; cursor: pointer; }
+    .form-select:focus { border-color: #1d4ed8; }
+    .form-hint { font-size: 12px; color: #8894a8; margin-top: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+  </style>
+</head>
+<body>
+  <div id="app" v-cloak>
+    
+    <!-- ===== 1. 行业选择页 ===== -->
+    <div v-if="currentPage === 'select-industry'" style="min-height: 100vh; width: 100vw; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f4f6fa; padding: 40px 20px;">
+      <div style="text-align: center; width: 100%; max-width: 900px;">
+        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+          <img src="aegisdata-logo-header.png" alt="AegisData" class="logo-img" style="margin-right: 16px;" />
+        </div>
+        <p style="color: #8894a8; font-size: 15px; margin: 0;">请选择您要审计的行业领域</p>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-top: 40px;">
+          <div v-for="(ind, index) in industries" :key="ind.name" 
+               @click="selectIndustry(ind)"
+               style="background: #ffffff; border: 1px solid #e6ebf2; border-radius: 12px; padding: 24px 16px; text-align: center; cursor: pointer; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; align-items: center; justify-content: center;"
+               onmouseover="this.style.borderColor='#1d4ed8'; this.style.transform='translateY(-2px)'"
+               onmouseout="this.style.borderColor='#e6ebf2'; this.style.transform='none'">
+            <div style="font-size: 36px; margin-bottom: 12px;">{{ ind.icon }}</div>
+            <div style="font-size: 14px; font-weight: 500; color: #0f1e35;">{{ ind.name }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 2. 登录页 ===== -->
+    <div v-if="currentPage === 'login'" style="height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; background: #f4f6fa;">
+      <div style="background: #fff; padding: 40px; border-radius: 16px; border: 1px solid #e6ebf2; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 380px;">
+        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 8px;">
+          <img src="aegisdata-logo-header.png" alt="AegisData" class="logo-img-sm" style="margin-right: 10px;" />
+        </div>
+        <p style="font-size: 14px; color: #8894a8; letter-spacing: 2px; margin-bottom: 32px; text-align: center;">AegisData 智能财务审计平台</p>
+        <div style="margin-bottom: 18px;">
+          <label style="display: block; font-size: 13.5px; color: #4a5a72; margin-bottom: 7px;">账号</label>
+          <input v-model="loginAccount" type="text" placeholder="请输入登录账号" @keyup.enter="handleLogin" style="width: 100%; height: 44px; padding: 0 14px; border: 1px solid #e6ebf2; border-radius: 8px; background: #f8fafc; outline:none;" />
+        </div>
+        <div style="margin-bottom: 18px;">
+          <label style="display: block; font-size: 13.5px; color: #4a5a72; margin-bottom: 7px;">密码</label>
+          <input v-model="password" type="password" placeholder="请输入密码" @keyup.enter="handleLogin" style="width: 100%; height: 44px; padding: 0 14px; border: 1px solid #e6ebf2; border-radius: 8px; background: #f8fafc; outline:none;" />
+        </div>
+        <p v-if="errorMsg" style="color: #b42318; font-size: 13px; margin-bottom: 16px;">{{ errorMsg }}</p>
+        <button class="btn-primary" style="width: 100%; height: 46px; font-size: 16px; letter-spacing: 2px;" :disabled="logging" @click="handleLogin">{{ logging ? '登录中…' : '登 录' }}</button>
+        <div style="text-align: center; font-size: 13.5px; color: #8894a8; margin-top: 20px;">
+          还没有账号？<a href="#" style="color: #1d4ed8; text-decoration: none;" @click.prevent="showToast('注册功能暂未开放')">立即注册</a>
+        </div>
+        <div style="text-align: center; font-size: 13px; color: #8894a8; margin-top: 12px;">
+          <a href="#" style="color: #1d4ed8; text-decoration: none;" @click.prevent="currentPage = 'select-industry'">← 切换行业 (当前：{{ selectedIndustry.name }})</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 3. 主界面 ===== -->
+    <div v-else-if="currentPage === 'main'" class="main-layout">
+      <div class="top-header">
+        <div style="display: flex; align-items: center;">
+          <img src="aegisdata-logo-header.png" alt="AegisData" class="logo-img-xs" style="margin-right: 8px;" />
+          <span style="width: 1px; height: 20px; background: #e6ebf2; margin: 0 12px;"></span>
+          <span style="font-size: 14px; font-weight: 500; color: #8894a8;">AegisData 智能财务审计平台</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 4px 12px 4px 4px; border-radius: 99px; cursor: pointer;" @click="showUserMenu = !showUserMenu" v-click-outside="closeUserMenu">
+             <div style="width: 28px; height: 28px; border-radius: 50%; background: #1d4ed8; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px;">{{ nickname.charAt(0).toUpperCase() }}</div>
+             <div style="font-size: 13px; font-weight: 600; color: #0f1e35;">{{ nickname }}</div>
+          </div>
+          <div v-if="showUserMenu" style="position: fixed; top: 56px; right: 32px; width: 180px; background: #fff; border: 1px solid #e6ebf2; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.12); padding: 6px; z-index: 200;">
+            <div style="padding: 10px 12px; font-size: 13px; color: #4a5a72; cursor: pointer; border-radius: 6px;" @click="openSettings" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">👤 个人设置</div>
+            <div style="padding: 10px 12px; font-size: 13px; color: #e5484d; cursor: pointer; border-radius: 6px;" @click="logout" onmouseover="this.style.background='#fdecea'" onmouseout="this.style.background='transparent'">🚪 退出登录</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="shell">
+        <aside class="sidebar">
+          <div style="padding: 12px 20px 8px;">
+            <div style="padding: 10px; background: #eef4ff; color: #1d4ed8; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; cursor: pointer; transition: 0.2s;" @click="showNewProjectModal = true">
+              <span>+</span> 新建审计项目
+            </div>
+          </div>
+          <div style="flex: 1; overflow-y: auto; padding: 0;">
+            <div v-if="currentProject" style="margin-bottom: 12px; margin-top: 8px;">
+              <div style="color: #1d4ed8; font-size: 12px; margin-bottom: 6px; font-weight: 600; padding: 0 24px;">当前项目</div>
+              <div style="padding: 8px 24px; background: #eef4ff; color: #1d4ed8; font-size: 14px; font-weight: 600; display: flex; align-items: center;">
+                <span style="margin-right: 8px;">📌</span> <span style="white-space: nowrap;">{{ currentProject.name }}</span>
+              </div>
+            </div>
+            <div style="margin-bottom: 12px;">
+              <div style="color: #8894a8; font-size: 12px; margin-bottom: 6px; font-weight: 600; padding: 0 24px;">本月项目</div>
+              <div v-for="proj in monthlyProjects" :key="proj.id" @click="currentProject = proj; resetWorkflow()" style="padding: 8px 24px; color: #4a5a72; font-size: 14px; cursor: pointer; margin-bottom: 2px; display: flex; align-items: center;">
+                <span style="margin-right: 8px;">📁</span> <span style="white-space: nowrap;">{{ proj.name }}</span>
+              </div>
+            </div>
+            <div style="margin-bottom: 12px;">
+              <div style="color: #8894a8; font-size: 12px; margin-bottom: 6px; font-weight: 600; padding: 0 24px;">历史项目</div>
+              <div v-for="proj in historyProjects" :key="proj.id" @click="currentProject = proj; resetWorkflow()" style="padding: 8px 24px; color: #4a5a72; font-size: 14px; cursor: pointer; margin-bottom: 2px; display: flex; align-items: center;">
+                <span style="margin-right: 8px;">🗂️</span> <span style="white-space: nowrap;">{{ proj.name }}</span>
+              </div>
+            </div>
+          </div>
+          <div style="padding: 16px 24px; border-top: 1px solid #e6ebf2; position: relative;" v-click-outside="closeLeftUserMenu">
+            <div style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 8px; border-radius: 8px; transition: background .2s;" 
+                 @click="showLeftUserMenu = !showLeftUserMenu"
+                 onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+              <div style="width: 34px; height: 34px; border-radius: 50%; background: #1d4ed8; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; flex-shrink: 0;">{{ nickname.charAt(0).toUpperCase() }}</div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 14px; font-weight: 600; color: #0f1e35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ nickname }}</div>
+              </div>
+              <span style="font-size: 12px; color: #8894a8;">⌄</span>
+            </div>
+            <div v-if="showLeftUserMenu" style="position: absolute; left: 24px; bottom: 70px; width: 180px; background: #fff; border: 1px solid #e6ebf2; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.12); padding: 6px; z-index: 50;">
+              <div style="padding: 10px 12px; font-size: 13px; color: #4a5a72; cursor: pointer; border-radius: 6px;" @click="openSettings" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">👤 个人设置</div>
+              <div style="padding: 10px 12px; font-size: 13px; color: #e5484d; cursor: pointer; border-radius: 6px;" @click="logout" onmouseover="this.style.background='#fdecea'" onmouseout="this.style.background='transparent'">🚪 退出登录</div>
+            </div>
+          </div>
+        </aside>
+
+        <div class="main">
+          <div class="content-wrapper">
+            <div v-if="currentProject" style="background: #ffffff; border-radius: 13px; padding: 24px 32px; border: 1px solid #e6ebf2;">
+              <div class="workflow-steps">
+                <div class="step" :class="{ active: currentStep >= 1, done: currentStep > 1 }">
+                  <div class="step-icon">1</div><div><div class="step-name">数据上传</div><div class="step-desc">导入财务凭证</div></div>
+                </div>
+                <div class="step-line" :class="{ active: currentStep > 1 }"></div>
+                <div class="step" :class="{ active: currentStep >= 2, done: currentStep > 2 }">
+                  <div class="step-icon">2</div><div><div class="step-name">数据初筛</div><div class="step-desc">自然语言过滤</div></div>
+                </div>
+                <div class="step-line" :class="{ active: currentStep > 2 }"></div>
+                <div class="step" :class="{ active: currentStep >= 3, done: currentStep > 3 }">
+                  <div class="step-icon">3</div><div><div class="step-name">AI 分析</div><div class="step-desc">大模型风险排查</div></div>
+                </div>
+                <div class="step-line" :class="{ active: currentStep > 3 }"></div>
+                <div class="step" :class="{ active: currentStep >= 4 }">
+                  <div class="step-icon">4</div><div><div class="step-name">结果产出</div><div class="step-desc">生成审计报告</div></div>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="!currentProject" style="padding: 60px; text-align: center; color: #8894a8;">
+              <div style="font-size: 48px; margin-bottom: 16px;">📂</div><h3>暂无进行中的项目</h3><p>请在左侧新建一个审计项目，或选择一个已有项目继续。</p>
+            </div>
+
+            <template v-else>
+              <div v-if="currentStep === 1" class="panel-box" @click="handleUploadAndGoFilter" style="cursor: pointer;">
+                <div class="upload-area">
+                  <div class="upload-icon">📄</div>
+                  <h3 style="font-size: 18px; color: #0f1e35; margin-bottom: 8px;">点击或拖拽文件到此处上传</h3>
+                  <p style="color: #8894a8; font-size: 14px; margin-bottom: 24px;">支持 Excel (.xlsx), CSV, PDF 等财务审计格式</p>
+                  <button class="btn-primary">模拟上传并解析</button>
+                </div>
+              </div>
+
+              <div v-if="currentStep === 2" class="panel-box" style="padding: 40px; display: flex; flex-direction: column; align-items: center;">
+                <div style="width: 100%; max-width: 700px;">
+                  <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #0f1e35;">
+                    📄 文件解析完成！共 {{ originalRecords.length }} 条记录
+                  </div>
+                  <div style="font-size: 14px; color: #8894a8; margin-bottom: 24px;">请描述你想筛选的数据，AI 将自动生成过滤条件，或点击"跳过"直接分析全部数据。</div>
+                  <div style="display: flex; gap: 10px; margin-bottom: 24px;">
+                    <input v-model="filterMessage" type="text" placeholder="例如：筛出金额大于5万且同一供应商多次交易的记录..." style="flex: 1; height: 48px; padding: 0 16px; font-size: 15px; border: 1px solid #e6ebf2; border-radius: 8px; background: #f8fafc; outline: none;" @keyup.enter="handleFilter" />
+                    <button class="btn-primary" style="height: 48px; padding: 0 32px;" @click="handleFilter">发送</button>
+                    <button class="btn-secondary" style="height: 48px; padding: 0 24px;" @click="skipFilter">跳过，直接分析全部</button>
+                  </div>
+                  <div v-if="filterExplanation" style="margin-bottom: 16px; padding: 12px 16px; background: #eef4ff; border-left: 3px solid #1d4ed8; border-radius: 6px; font-size: 14px; color: #0f1e35;">
+                    🤖 <strong>AI 理解结果：</strong>{{ filterExplanation }}
+                  </div>
+                  <div v-if="showFilterResult" style="border: 1px dashed #e6ebf2; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                    <div style="font-size: 14px; font-weight: 600; color: #0f1e35; margin-bottom: 16px;">根据您的需求，生成以下筛选条件（均可手动修改）：</div>
+                    <div v-for="(cond, idx) in currentConditions" :key="idx" style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; background: #f8fafc; padding: 12px 16px; border-radius: 8px; border: 1px solid #e6ebf2;">
+                      <div style="font-size: 13px; color: #8894a8; margin-right: 10px;">条件 {{ idx + 1 }}:</div>
+                      <select v-model="cond.field" @change="onConditionChange" style="height: 34px; padding: 0 10px; border: 1px solid #e6ebf2; border-radius: 6px; background: #ffffff;">
+                        <option v-for="f in Object.keys(currentRecords[0] || {})" :key="f" :value="f">{{ f }}</option>
+                      </select>
+                      <select v-model="cond.op" @change="onConditionChange" style="height: 34px; padding: 0 10px; border: 1px solid #e6ebf2; border-radius: 6px; background: #ffffff;">
+                        <option value=">">&gt;</option><option value="<">&lt;</option><option value="==">==</option><option value="contains">contains</option><option value="freq">freq（频次）</option>
+                      </select>
+                      <input v-if="cond.op !== 'freq'" v-model="cond.value" type="text" @input="onConditionChange" style="flex: 1; min-width: 100px; height: 34px; padding: 0 10px; border: 1px solid #e6ebf2; border-radius: 6px; background: #ffffff;" />
+                      <template v-if="cond.op === 'freq'">
+                        <input v-model="cond.window.groupField" placeholder="分组字段" @input="onConditionChange" style="width: 100px; height: 34px; padding: 0 10px; border: 1px solid #e6ebf2; border-radius: 6px;" />
+                        <span style="color:#8894a8; font-size:13px;">在</span>
+                        <input v-model.number="cond.window.days" type="number" style="width:60px; height: 34px; padding: 0 10px; border: 1px solid #e6ebf2; border-radius: 6px;" @input="onConditionChange" />
+                        <span style="color:#8894a8; font-size:13px;">天内出现 ≥</span>
+                        <input v-model.number="cond.window.threshold" type="number" style="width:60px; height: 34px; padding: 0 10px; border: 1px solid #e6ebf2; border-radius: 6px;" @input="onConditionChange" />
+                        <span style="color:#8894a8; font-size:13px;">次</span>
+                      </template>
+                    </div>
+                    <div style="font-size: 15px; font-weight: 600; color: #067647;">✅ 符合条件：{{ filterMatchCount }} 条记录</div>
+                  </div>
+                  <div v-if="showFilterResult" style="display: flex; gap: 16px; margin-top: 24px;">
+                    <button class="btn-primary" style="flex: 1; height: 46px; font-size: 16px;" @click="confirmFilter">确认筛选，进入异常分析</button>
+                    <button class="btn-secondary" style="width: 120px; height: 46px;" @click="resetFilterInput">重新输入</button>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="currentStep === 3" class="panel-box">
+                <div class="upload-area" style="width: 100%; max-width: 500px;">
+                  <div class="upload-icon" :style="aiAnalysisComplete ? '' : 'animation: pulse 1.5s infinite;'">{{ aiAnalysisComplete ? '✅' : '🧠' }}</div>
+                  <h3 style="margin-bottom: 8px;">{{ aiAnalysisComplete ? 'AI 分析完成' : 'AI 正在全量扫描数据...' }}</h3>
+                  <p style="margin-bottom: 24px;">
+                    <span v-if="!aiAnalysisComplete" style="color: #1d4ed8; font-weight: bold;">耗时：{{ aiElapsedTime }} 秒</span>
+                    <span v-else style="color: #067647; font-weight: bold;">分析完成，总耗时 {{ aiElapsedTime }} 秒</span>
+                  </p>
+                  <div style="background: #f8fafc; padding: 20px; border-radius: 12px; text-align: left;">
+                    <div v-for="(task, index) in aiTasks" :key="index" style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 14px; color: #4a5a72;">
+                      <span style="color: #1d4ed8; font-weight: bold;">
+                        <span v-if="task.done">✓</span>
+                        <span v-else-if="index === activeAiTaskIndex" style="display:inline-block; width:12px; height:12px; border:2px solid #1d4ed8; border-bottom-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></span>
+                        <span v-else>○</span>
+                      </span>
+                      {{ task.text }}
+                    </div>
+                  </div>
+                  <button class="btn-primary" style="margin-top: 30px;" :disabled="!aiAnalysisComplete" @click="goToReport">{{ aiAnalysisComplete ? '查看分析报告' : '分析中...' }}</button>
+                </div>
+              </div>
+
+              <div v-if="currentStep === 4" style="display: flex; flex-direction: column; gap: 24px;">
+                <div class="card">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                      <h3 style="font-size: 20px; margin-bottom: 6px; font-weight: 700;">审计报告已生成</h3>
+                      <p style="font-size: 14px; color: #8894a8;">本次共分析 <strong>{{ currentRecords.length }}</strong> 笔流水，发现 <strong style="color:#b42318;">{{ currentAnomalies.length }} 笔异常</strong></p>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                      <button class="btn-secondary" @click="resetWorkflow">重新审计</button>
+                      <button class="btn-primary" @click="showToast('报告已开始下载')">下载完整报告</button>
+                    </div>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="border: 1px solid #e6ebf2; border-radius: 12px; padding: 20px;">
+                      <div style="margin-bottom: 16px; font-size: 15px; font-weight: 600;">📄 异常证据抽样 (展示前 3)</div>
+                      <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                        <div v-for="(a, index) in currentAnomalies.slice(0,3)" :key="index" @click="activeReceipt = index" 
+                             :style="{ border: activeReceipt === index ? '1px solid #1d4ed8' : '1px solid #e6ebf2', background: activeReceipt === index ? '#eef4ff' : '#ffffff', padding: '12px', borderRadius: '8px', cursor: 'pointer', flex: 1, textAlign: 'center' }">
+                          <div style="font-size: 24px; margin-bottom: 4px; color: #b42318;">🧾</div>
+                          <div style="font-size: 13px; font-weight: 600;">异常 {{ index + 1 }}</div>
+                        </div>
+                      </div>
+                      <div v-if="currentAnomalies[activeReceipt]" style="background: #f8fafc; padding: 16px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13.5px; color: #4a5a72;"><span>异常类型：</span><strong>{{ currentAnomalies[activeReceipt].field }}</strong></div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13.5px; color: #4a5a72;"><span>风险等级：</span><strong :style="{color: currentAnomalies[activeReceipt].riskLevel === '高' ? '#b42318' : (currentAnomalies[activeReceipt].riskLevel === '中' ? '#b25e09' : '#067647')}">{{ currentAnomalies[activeReceipt].riskLevel }}</strong></div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13.5px; color: #4a5a72;"><span>关联记录：</span><strong>{{ (currentAnomalies[activeReceipt].evidenceRecords || []).length }} 条</strong></div>
+                        <div style="margin-top: 20px; text-align: left; background: #fdecea; color: #b42318; border: 1px solid #f7c9c4; padding: 12px; border-radius: 6px; font-size: 13px;">AI 判定：{{ currentAnomalies[activeReceipt].description }}</div>
+                      </div>
+                    </div>
+                    <div style="background: #eef4ff; border: 1px solid #d3e0ff; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; overflow: hidden;">
+                      <div style="font-size: 56px; margin-bottom: 16px;">📊</div>
+                      <h3 style="font-size: 20px; font-weight: 700; color: #0f1e35; margin-bottom: 12px; z-index: 1;">AI 数据关联与可视化洞察</h3>
+                      <p style="color: #4a5a72; text-align: center; font-size: 14px; line-height: 1.6; margin-bottom: 24px; z-index: 1;">系统已自动针对"{{ selectedIndustry.name }}"行业特征，<br>生成了年度风险监控可视化大屏。</p>
+                      <button class="btn-primary" @click="openChartModal">一键展开可视化数据大屏</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card" style="padding: 0;">
+                  <div style="padding: 18px; border-bottom: 1px solid #e6ebf2; font-size: 16px; font-weight: 600;">异常明细（{{ currentAnomalies.length }} 条）</div>
+                  <table class="table">
+                    <thead><tr><th style="width:36px;"></th><th>风险等级</th><th>字段/类型</th><th>异常描述</th><th style="width:90px;">操作</th></tr></thead>
+                    <tbody>
+                      <template v-for="(a, idx) in currentAnomalies" :key="a.id || idx">
+                        <tr @click="toggleEvidence(a.id || idx)" style="cursor: pointer;">
+                          <td style="color: #8894a8; text-align: center;">{{ expandedAnomalyId === (a.id || idx) ? '▾' : '▸' }}</td>
+                          <td><span class="tag" :class="a.riskLevel === '高' ? 'tag--deny' : (a.riskLevel === '中' ? 'tag--pending' : 'tag--allow')">{{ a.riskLevel }}</span></td>
+                          <td>{{ a.field || a.type || '-' }}</td>
+                          <td>{{ a.description }}</td>
+                          <td><button class="btn-secondary" style="padding: 4px 12px; font-size: 12.5px;" @click.stop="handleExplain(a.id, a)">AI解读</button></td>
+                        </tr>
+                        <tr v-if="expandedAnomalyId === (a.id || idx)" style="background: #f8fafc;">
+                          <td colspan="5" style="padding: 16px;">
+                            <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #8894a8;">关联证据记录（{{ (a.evidenceRecords || []).length }} 条）</div>
+                            <table class="table" style="border: 1px solid #e6ebf2;">
+                              <thead><tr><th>日期</th><th>主体</th><th>金额</th><th>说明</th></tr></thead>
+                              <tbody>
+                                <tr v-for="(e, ei) in (a.evidenceRecords || [])" :key="ei"><td>{{ e.date }}</td><td>{{ e.subject }}</td><td style="color: #1d4ed8; font-family: monospace;">{{ e.amount }}</td><td>{{ e.desc }}</td></tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="card" v-if="suggestionsData" style="padding: 0;">
+                  <div style="padding: 18px; border-bottom: 1px solid #e6ebf2; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="font-size: 16px; margin: 0;">📋 整改意见</h3>
+                    <span class="tag" :class="suggestionsData.overallRisk === '高' ? 'tag--deny' : (suggestionsData.overallRisk === '中' ? 'tag--pending' : 'tag--allow')">整体风险：{{ suggestionsData.overallRisk }}</span>
+                  </div>
+                  <div style="padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div style="background: #f8fafc; border-radius: 8px; padding: 16px;"><h4 style="font-size: 14px; color: #1d4ed8; margin-bottom: 10px;">关键问题</h4><ul style="margin: 0; padding-left: 20px; font-size: 13.5px; color: #4a5a72; line-height: 1.8;"><li v-for="(item, i) in suggestionsData.keyIssues" :key="'k'+i">{{ item }}</li></ul></div>
+                    <div style="background: #f8fafc; border-radius: 8px; padding: 16px;"><h4 style="font-size: 14px; color: #1d4ed8; margin-bottom: 10px;">整改措施</h4><ul style="margin: 0; padding-left: 20px; font-size: 13.5px; color: #4a5a72; line-height: 1.8;"><li v-for="(item, i) in suggestionsData.measures" :key="'m'+i">{{ item }}</li></ul></div>
+                    <div style="background: #f8fafc; border-radius: 8px; padding: 16px;"><h4 style="font-size: 14px; color: #1d4ed8; margin-bottom: 10px;">内控建议</h4><ul style="margin: 0; padding-left: 20px; font-size: 13.5px; color: #4a5a72; line-height: 1.8;"><li v-for="(item, i) in suggestionsData.internalControl" :key="'c'+i">{{ item }}</li></ul></div>
+                    <div style="background: #f8fafc; border-radius: 8px; padding: 16px;"><h4 style="font-size: 14px; color: #1d4ed8; margin-bottom: 10px;">后续跟进</h4><ul style="margin: 0; padding-left: 20px; font-size: 13.5px; color: #4a5a72; line-height: 1.8;"><li v-for="(item, i) in suggestionsData.followUp" :key="'f'+i">{{ item }}</li></ul></div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新建项目弹窗 -->
+    <div v-if="showNewProjectModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100;">
+      <div class="card" style="width: 420px;">
+        <h3>新建审计项目</h3>
+        <div style="margin: 16px 0 24px;">
+          <label class="form-label">项目名称</label>
+          <input v-model="newProjectName" type="text" placeholder="例如：2025年度财务合规审计" @keyup.enter="createProject" class="form-input" />
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <button class="btn-secondary" @click="showNewProjectModal = false">取消</button>
+          <button class="btn-primary" @click="createProject">创建并进入</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 设置弹窗（6 个 tab） -->
+    <div v-if="showSettingsModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100;">
+      <div class="card" style="width: 660px; display: flex; flex-direction: column; height: 560px; padding: 0; overflow: hidden; position: relative;">
+        <div style="display: flex; flex: 1; overflow: hidden;">
+          <div style="width: 150px; border-right: 1px solid #e6ebf2; background: #f8fafc; padding: 20px 8px;">
+            <h3 style="padding-left: 10px; margin-bottom: 16px; font-size: 16px;">个人设置</h3>
+            <div v-for="t in settingsTabs" :key="t.key"
+                 style="padding: 10px 12px; border-radius: 6px; margin-bottom: 4px; cursor: pointer; font-size: 14px;"
+                 :style="{ background: settingsTab === t.key ? '#eef4ff' : 'transparent', color: settingsTab === t.key ? '#1d4ed8' : '#4a5a72', fontWeight: settingsTab === t.key ? 600 : 400 }"
+                 @click="settingsTab = t.key">
+              {{ t.icon }} {{ t.label }}
+            </div>
+          </div>
+          <div style="flex: 1; padding: 28px; overflow-y: auto;">
+            <div v-if="settingsTab === 'profile'">
+              <div style="margin-bottom: 24px;">
+                <div class="form-label">头像</div>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                  <label class="avatar-uploader">
+                    <img :src="editAvatar" v-if="editAvatar" />
+                    <div v-else style="width:100%; height:100%; background:#eef4ff; color:#1d4ed8; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:700;">{{ editNickname ? editNickname.charAt(0).toUpperCase() : 'U' }}</div>
+                    <div class="avatar-mask">更换头像</div>
+                    <input type="file" accept="image/*" style="display:none;" @change="handleAvatarUpload" />
+                  </label>
+                  <div style="font-size: 13px; color: #8894a8;">支持 JPG / PNG，建议尺寸 200×200px<br>最大不超过 2MB</div>
+                </div>
+              </div>
+              <div class="form-row"><label class="form-label">登录账号</label><input type="text" :value="loginAccount" disabled class="form-input" /></div>
+              <div class="form-row"><label class="form-label">用户昵称 <span class="req">*</span></label><input v-model="editNickname" type="text" placeholder="请输入昵称" class="form-input" /></div>
+              <div class="form-row"><label class="form-label">性别</label><select v-model="editGender" class="form-select"><option value="">请选择</option><option value="男">男</option><option value="女">女</option><option value="保密">保密</option></select></div>
+              <div class="form-row"><label class="form-label">出生年月</label><input v-model="editBirthday" type="date" class="form-input" /></div>
+              <div class="form-row"><label class="form-label">邮箱</label><input v-model="editEmail" type="email" placeholder="请输入邮箱" class="form-input" /></div>
+              <div class="form-row" style="margin-bottom: 0;"><label class="form-label">手机号</label><input v-model="editPhone" type="tel" placeholder="请输入手机号" class="form-input" /></div>
+            </div>
+            <div v-if="settingsTab === 'security'">
+              <div class="form-row"><label class="form-label">原密码 <span class="req">*</span></label><input v-model="oldPassword" type="password" placeholder="请输入原密码" class="form-input" /></div>
+              <div class="form-row"><label class="form-label">新密码 <span class="req">*</span></label><input v-model="newPassword" type="password" placeholder="至少 6 位" class="form-input" /></div>
+              <div class="form-row" style="margin-bottom: 0;"><label class="form-label">确认新密码 <span class="req">*</span></label><input v-model="confirmPassword" type="password" placeholder="再次输入新密码" class="form-input" /></div>
+            </div>
+            <div v-if="settingsTab === 'notify'">
+              <div v-for="(v, k) in notifyPrefs" :key="k" style="display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid #eef2f7;">
+                <div><div style="font-size:14px; color:#0f1e35; font-weight:600;">{{ notifyLabel[k] }}</div><div style="font-size:12px; color:#8894a8; margin-top:4px;">{{ notifyDesc[k] }}</div></div>
+                <label style="cursor:pointer;"><input type="checkbox" v-model="notifyPrefs[k]" style="width:16px; height:16px; accent-color:#1d4ed8;" /></label>
+              </div>
+            </div>
+            <div v-if="settingsTab === 'logs'">
+              <table class="table">
+                <thead><tr><th>时间</th><th>操作</th><th>IP</th><th>结果</th></tr></thead>
+                <tbody>
+                  <tr v-for="l in userLogs" :key="l.id"><td style="font-size:12px;">{{ l.time }}</td><td style="font-size:13px;">{{ l.action }}</td><td style="font-size:12px;">{{ l.ip }}</td><td><span class="tag" :class="l.result === '成功' ? 'tag--allow' : 'tag--deny'">{{ l.result }}</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-if="settingsTab === 'sessions'">
+              <table class="table">
+                <thead><tr><th>时间</th><th>IP</th><th>地点</th><th>设备</th><th>状态</th></tr></thead>
+                <tbody>
+                  <tr v-for="s in userSessions" :key="s.id"><td style="font-size:12px;">{{ s.time }}</td><td style="font-size:12px;">{{ s.ip }}</td><td style="font-size:12px;">{{ s.location }}</td><td style="font-size:12px;">{{ s.device }}</td><td><span class="tag" :class="s.status === '成功' ? 'tag--allow' : 'tag--deny'">{{ s.status }}</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-if="settingsTab === 'appearance'">
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 0;">
+                <div><div style="font-size:14px; color:#0f1e35; font-weight:600;">深色模式</div><div style="font-size:12px; color:#8894a8; margin-top:4px;">切换为暗色主题</div></div>
+                <label style="cursor:pointer;"><input type="checkbox" v-model="darkMode" style="width:16px; height:16px; accent-color:#1d4ed8;" /></label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="padding: 16px 24px; border-top: 1px solid #e6ebf2; background: #ffffff; display: flex; gap: 12px; justify-content: flex-end; flex-shrink: 0;">
+          <button class="btn-secondary" @click="showSettingsModal = false">取消</button>
+          <button class="btn-primary" @click="saveSettings">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 大屏弹窗 -->
+    <div v-if="showChartModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100;">
+      <div class="card" style="width: 90vw; max-width: 1200px; height: 85vh; display: flex; flex-direction: column; padding: 0;">
+        <div style="padding: 16px 24px; border-bottom: 1px solid #e6ebf2; display: flex; justify-content: space-between; align-items: center;">
+          <h2 style="font-size: 20px;">📊 AegisData 智能审计数据洞察大屏</h2>
+          <span style="cursor: pointer; font-size: 24px; color: #8894a8;" @click="showChartModal = false">✕</span>
+        </div>
+        <div style="padding: 12px 24px; border-bottom: 1px dashed #e6ebf2; background: #f8fafc; display: flex; gap: 12px; align-items: center;">
+          <span style="font-size: 20px;">🤖</span>
+          <input v-model="aiChartMessage" type="text" placeholder="对 AI 说：帮我画一个各部门的异常金额占比图..." 
+                 style="flex: 1; height: 40px; padding: 0 16px; border: 1px solid #e6ebf2; border-radius: 8px; outline: none;" 
+                 @keyup.enter="generateCustomChart" />
+          <button class="btn-primary" :disabled="isAiGenerating" @click="generateCustomChart" style="height: 40px; padding: 0 20px;">
+            {{ isAiGenerating ? 'AI 思考中...' : '生成图表' }}
+          </button>
+        </div>
+        <div style="flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <div style="background: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #e6ebf2;">
+              <div style="font-size: 16px; font-weight: 600; margin-bottom: 10px; border-left: 4px solid #1d4ed8; padding-left: 10px;">全年异常金额波动趋势</div>
+              <div id="modalChart1" style="width: 100%; height: 300px;"></div>
+            </div>
+            <div style="background: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #e6ebf2;">
+              <div style="font-size: 16px; font-weight: 600; margin-bottom: 10px; border-left: 4px solid #1d4ed8; padding-left: 10px;">高风险供应商异常金额 (Top 5)</div>
+              <div id="modalChart2" style="width: 100%; height: 300px;"></div>
+            </div>
+            <div style="background: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #e6ebf2;">
+              <div style="font-size: 16px; font-weight: 600; margin-bottom: 10px; border-left: 4px solid #1d4ed8; padding-left: 10px;">风险类型占比分析</div>
+              <div id="modalChart3" style="width: 100%; height: 300px;"></div>
+            </div>
+            <div style="background: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #e6ebf2;">
+              <div style="font-size: 16px; font-weight: 600; margin-bottom: 10px; border-left: 4px solid #1d4ed8; padding-left: 10px;">风险等级分布</div>
+              <div id="modalChart4" style="width: 100%; height: 300px;"></div>
+            </div>
+          </div>
+          <div v-if="suggestionsData" style="margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3 style="font-size: 18px;">📋 整改意见</h3>
+              <span class="tag" :class="suggestionsData.overallRisk === '高' ? 'tag--deny' : (suggestionsData.overallRisk === '中' ? 'tag--pending' : 'tag--allow')">整体风险：{{ suggestionsData.overallRisk }}</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div style="background: #f8fafc; border-radius: 8px; padding: 16px;"><h4 style="font-size: 14px; color: #1d4ed8; margin-bottom: 10px;">关键问题</h4><ul style="margin: 0; padding-left: 20px; font-size: 13.5px; color: #4a5a72; line-height: 1.8;"><li v-for="(item, i) in suggestionsData.keyIssues" :key="'k'+i">{{ item }}</li></ul></div>
+              <div style="background: #f8fafc; border-radius: 8px; padding: 16px;"><h4 style="font-size: 14px; color: #1d4ed8; margin-bottom: 10px;">整改措施</h4><ul style="margin: 0; padding-left: 20px; font-size: 13.5px; color: #4a5a72; line-height: 1.8;"><li v-for="(item, i) in suggestionsData.measures" :key="'m'+i">{{ item }}</li></ul></div>
+              <div style="background: #f8fafc; border-radius: 8px; padding: 16px;"><h4 style="font-size: 14px; color: #1d4ed8; margin-bottom: 10px;">内控建议</h4><ul style="margin: 0; padding-left: 20px; font-size: 13.5px; color: #4a5a72; line-height: 1.8;"><li v-for="(item, i) in suggestionsData.internalControl" :key="'c'+i">{{ item }}</li></ul></div>
+              <div style="background: #f8fafc; border-radius: 8px; padding: 16px;"><h4 style="font-size: 14px; color: #1d4ed8; margin-bottom: 10px;">后续跟进</h4><ul style="margin: 0; padding-left: 20px; font-size: 13.5px; color: #4a5a72; line-height: 1.8;"><li v-for="(item, i) in suggestionsData.followUp" :key="'f'+i">{{ item }}</li></ul></div>
+            </div>
+          </div>
+        </div>
+        <div style="padding: 16px 24px; border-top: 1px solid #e6ebf2; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 13px; color: #8894a8;">将生成包含 4 张高清图表的压缩包</span>
+          <button class="btn-primary" :disabled="isExporting" @click="exportChartsToZip">{{ isExporting ? '打包生成中...' : '一键导出图表压缩包' }}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI解读弹窗 -->
+    <div v-if="showExplainModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100;">
+      <div class="card" style="width: 520px;">
+        <h3>🤖 AI 解读</h3>
+        <div style="min-height: 80px; font-size: 14px; line-height: 1.8; color: #0f1e35; margin-top: 16px; margin-bottom: 24px;">
+          <p v-if="explainLoading" style="color: #8894a8;">AI 正在解读…</p>
+          <p v-else style="white-space: pre-wrap;">{{ explainText }}</p>
+        </div>
+        <div style="text-align: right;"><button class="btn-secondary" @click="showExplainModal = false">关闭</button></div>
+      </div>
+    </div>
+
+    <div v-if="toastMsg" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.75); color: #fff; padding: 12px 24px; border-radius: 8px; font-size: 14px; z-index: 9999;">{{ toastMsg }}</div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
