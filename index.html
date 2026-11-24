@@ -463,6 +463,8 @@
           <h2 style="font-size: 20px;">📊 AegisData 智能审计数据洞察大屏</h2>
           <span style="cursor: pointer; font-size: 24px; color: #8894a8;" @click="showChartModal = false">✕</span>
         </div>
+        
+        <!-- ===== AI 对话生成图表输入框 ===== -->
         <div style="padding: 12px 24px; border-bottom: 1px dashed #e6ebf2; background: #f8fafc; display: flex; gap: 12px; align-items: center;">
           <span style="font-size: 20px;">🤖</span>
           <input v-model="aiChartMessage" type="text" placeholder="对 AI 说：帮我画一个各部门的异常金额占比图..." 
@@ -472,6 +474,7 @@
             {{ isAiGenerating ? 'AI 思考中...' : '生成图表' }}
           </button>
         </div>
+
         <div style="flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px;">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
             <div style="background: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #e6ebf2;">
@@ -527,6 +530,7 @@
   </div>
 
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="js/api.js"></script> <!-- 注意这里必须引入 api.js -->
   <script src="js/app.js"></script>
 </body>
 </html>

@@ -189,7 +189,23 @@ a { color: inherit; text-decoration: none; }
 }
 .nav__item.is-active .nav__count { color: var(--brand); background: #fff; }
 
-.sidebar__foot { margin-top: auto; padding: 12px 11px 6px; border-top: 1px solid var(--line); }
+/* ══════════ 侧栏底部用户区（已改：线挪到底部、整块收紧） ══════════ */
+.sidebar__foot {
+  margin-top: auto;
+  padding: 6px 12px 10px !important;
+  border-top: 0 !important;
+  position: relative;
+}
+.sidebar__foot::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 1px;
+  background: var(--line);
+  opacity: .6;
+}
 .sidebar__foot b { display: block; font-size: 12px; font-weight: 600; color: var(--ink-2); }
 .sidebar__foot span { display: block; margin-top: 3px; font-size: 11px; color: var(--ink-3); line-height: 1.6; }
 
@@ -988,4 +1004,40 @@ body[data-single] .page.is-shown { display: flex; flex-direction: column; flex: 
 }
 .top__logo svg {
   display: none;
+}
+/* 侧栏底部用户区：彻底压缩 */
+.sidebar {
+  justify-content: flex-start;
+}
+.sidebar__foot,
+.sidebar > .sidebar__foot,
+.sidebar > div:last-child {
+  margin-top: auto !important;
+  padding: 4px 12px 8px !important;
+  border-top: 0 !important;
+  box-shadow: none !important;
+  min-height: 44px !important;
+  height: auto !important;
+}
+.sidebar__foot::before,
+.sidebar__foot::after {
+  display: none !important;
+}
+.sidebar__foot .user,
+.sidebar__foot button,
+.user-trigger,
+.sidebar__user {
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 2px 6px !important;
+  gap: 7px;
+  background: transparent !important;
+  font-size: 13px;
+}
+.sidebar__foot .avatar,
+.user-avatar,
+.avatar {
+  width: 22px !important;
+  height: 22px !important;
+  font-size: 11px !important;
 }

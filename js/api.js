@@ -17,7 +17,10 @@ function delay(data, ms = 300) {
 }
 
 function mockRequest(url, method, body, headers) {
-  const b = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
+  let b = {};
+  try {
+    b = typeof body === 'string' ? JSON.parse(body || '{}') : (body || {});
+  } catch(e) { b = body || {}; }
 
   // 健康检查
   if (url.includes('/health')) return delay({ status: 'ok' }, 100);
@@ -59,12 +62,24 @@ function mockRequest(url, method, body, headers) {
     ]
   });
 
-  // 图表
-  if (url.includes('/api/charts')) return delay({
-    riskPie: [{ value: 120, name: '高风险' }, { value: 260, name: '中风险' }, { value: 420, name: '低风险' }],
-    trend: { months: ['1月','2月','3月','4月','5月','6月'], values: [120,200,150,280,190,310] },
-    industryBar: { names: ['制造','金融','科技','零售'], values: [320,210,180,150] }
-  });
+  // 图表（修改：支持 AI 对话生成）
+  if (url.includes('/api/charts')) {
+    // 如果带了 message 参数（POST 过来的），说明是 AI 生成需求
+    if (b.message) {
+      return delay({ 
+        chartType: b.message.includes('占比') || b.message.includes('饼图') ? 'pie' : 'bar',
+        title: 'AI 智能生成：' + b.message,
+        dimension: 'subject',
+        metric: 'amount'
+      }, 800);
+    }
+    // 如果不带参数，说明是获取默认图表数据（保留你原来的）
+    return delay({
+      riskPie: [{ value: 120, name: '高风险' }, { value: 260, name: '中风险' }, { value: 420, name: '低风险' }],
+      trend: { months: ['1月','2月','3月','4月','5月','6月'], values: [120,200,150,280,190,310] },
+      industryBar: { names: ['制造','金融','科技','零售'], values: [320,210,180,150] }
+    });
+  }
 
   // 用户资料
   if (url.includes('/api/user/profile') && method === 'GET') return delay({
@@ -117,7 +132,13 @@ const api = {
   explain: data => request('/api/explain', { method: 'POST', body: JSON.stringify(data) }),
   chat: data => request('/api/chat', { method: 'POST', body: JSON.stringify(data) }),
   suggestions: params => request('/api/suggestions' + (params ? '?' + new URLSearchParams(params) : '')),
-  charts: params => request('/api/charts' + (params ? '?' + new URLSearchParams(params) : '')),
+  // 修改：支持 POST 传 message
+  charts: params => {
+    if (typeof params === 'string') {
+      return request('/api/charts', { method: 'POST', body: JSON.stringify({ message: params }) });
+    }
+    return request('/api/charts' + (params ? '?' + new URLSearchParams(params) : ''));
+  },
   user: {
     getProfile: () => request('/api/user/profile'),
     updateProfile: data => request('/api/user/profile', { method: 'PUT', body: JSON.stringify(data) }),

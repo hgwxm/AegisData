@@ -1,4 +1,4 @@
-// js/app.js —— 完整版，设置弹窗已扩展为 6 个 tab
+// js/app.js —— 完整版，已集成 AI 对话生成图表
 const { createApp, ref, reactive } = Vue;
 
 // 点击外部关闭指令
@@ -15,29 +15,29 @@ createApp({
     // ===== 页面状态 =====
     const currentPage = ref('select-industry');
     const industries = ref([
-  { name: '制造业', icon: '🏭' },
-  { name: '金融业', icon: '🏦' },
-  { name: '信息技术', icon: '💻' },
-  { name: '批发零售', icon: '🛒' },
-  { name: '能源化工', icon: '⚡' },
-  { name: '医疗健康', icon: '🏥' },
-  { name: '建筑地产', icon: '🏗️' },
-  { name: '交通运输', icon: '🚚' },
-  { name: '教育文化', icon: '🎓' },
-  { name: '农业食品', icon: '🌾' },
-  { name: '餐饮住宿', icon: '🍜' },
-  { name: '文体娱乐', icon: '🎬' },
-  { name: '公共管理', icon: '🏛️' },
-  { name: '科学研究', icon: '🔬' },
-  { name: '居民服务', icon: '🧰' }
-]);
+      { name: '制造业', icon: '🏭' },
+      { name: '金融业', icon: '🏦' },
+      { name: '信息技术', icon: '💻' },
+      { name: '批发零售', icon: '🛒' },
+      { name: '能源化工', icon: '⚡' },
+      { name: '医疗健康', icon: '🏥' },
+      { name: '建筑地产', icon: '🏗️' },
+      { name: '交通运输', icon: '🚚' },
+      { name: '教育文化', icon: '🎓' },
+      { name: '农业食品', icon: '🌾' },
+      { name: '餐饮住宿', icon: '🍜' },
+      { name: '文体娱乐', icon: '🎬' },
+      { name: '公共管理', icon: '🏛️' },
+      { name: '科学研究', icon: '🔬' },
+      { name: '居民服务', icon: '🧰' }
+    ]);
     const selectedIndustry = ref({ name: '' });
     const nickname = ref('普通用户');
     const showUserMenu = ref(false);
     const showLeftUserMenu = ref(false);
     const currentProject = ref(null);
-    const monthlyProjects = ref([{ id: 1, name: '2025年度财务合规审计' }]);
-    const historyProjects = ref([{ id: 2, name: '2024年度内控审计' }]);
+    const monthlyProjects = ref([{ id: 1, name: '2025年度财务合规审计', createdAt: '2025-11-01T00:00:00.000Z' }]);
+    const historyProjects = ref([{ id: 2, name: '2024年度内控审计', createdAt: '2024-06-01T00:00:00.000Z' }]);
     const showNewProjectModal = ref(false);
     const newProjectName = ref('');
     const currentStep = ref(1);
@@ -64,7 +64,7 @@ createApp({
     const explainLoading = ref(false);
     const explainText = ref('');
     const toastMsg = ref('');
-    const loginAccount = ref('admin');
+    const loginAccount = ref('');
     const password = ref('');
     const errorMsg = ref('');
     const logging = ref(false);
@@ -82,11 +82,50 @@ createApp({
     function logout() { currentPage.value = 'select-industry'; showUserMenu.value = false; showLeftUserMenu.value = false; }
     function closeUserMenu() { showUserMenu.value = false; }
     function closeLeftUserMenu() { showLeftUserMenu.value = false; }
+
+    // ===== 项目互斥归档逻辑 =====
+    // 判断一个项目是否属于本月
+    function isProjectThisMonth(proj) {
+      if (!proj || !proj.createdAt) return true; // 没有创建时间的默认算本月
+      const now = new Date();
+      const created = new Date(proj.createdAt);
+      return created.getFullYear() === now.getFullYear() && created.getMonth() === now.getMonth();
+    }
+
+    // 新建项目：旧当前项目归档到本月或历史（互斥，不重复）
     function createProject() {
       if (!newProjectName.value) return showToast('请输入项目名称');
-      currentProject.value = { name: newProjectName.value };
+      if (currentProject.value && currentProject.value.name) {
+        const old = { ...currentProject.value };
+        // 先从两个分组里都清掉，保证不重复
+        monthlyProjects.value = monthlyProjects.value.filter(p => p.name !== old.name);
+        historyProjects.value = historyProjects.value.filter(p => p.name !== old.name);
+        // 只塞进唯一一个分组
+        if (isProjectThisMonth(old)) {
+          monthlyProjects.value.push(old);
+        } else {
+          historyProjects.value.push(old);
+        }
+      }
+      currentProject.value = { name: newProjectName.value, createdAt: new Date().toISOString() };
       showNewProjectModal.value = false; newProjectName.value = ''; currentStep.value = 1;
     }
+
+    // 点击本月/历史项目切回当前
+    function openProject(p, group) {
+      monthlyProjects.value = monthlyProjects.value.filter(x => x.name !== p.name);
+      historyProjects.value = historyProjects.value.filter(x => x.name !== p.name);
+      if (currentProject.value && currentProject.value.name) {
+        const old = { ...currentProject.value };
+        monthlyProjects.value = monthlyProjects.value.filter(x => x.name !== old.name);
+        historyProjects.value = historyProjects.value.filter(x => x.name !== old.name);
+        if (isProjectThisMonth(old)) monthlyProjects.value.push(old);
+        else historyProjects.value.push(old);
+      }
+      currentProject.value = { ...p };
+      currentStep.value = 1;
+    }
+
     function resetWorkflow() { currentStep.value = 1; aiAnalysisComplete.value = false; }
     function handleUploadAndGoFilter() { currentStep.value = 2; originalRecords.value = Array.from({ length: 12 }, (_, i) => ({})); }
     function handleFilter() {
@@ -133,9 +172,55 @@ createApp({
       showExplainModal.value = true; explainLoading.value = true; explainText.value = '';
       setTimeout(() => { explainLoading.value = false; explainText.value = '该异常主要源于交易金额与历史均值偏离超过 3 个标准差，且对应凭证缺失。'; }, 600);
     }
+    
     function openChartModal() { showChartModal.value = true; setTimeout(renderCharts, 100); }
-    function generateCustomChart() { isAiGenerating.value = true; setTimeout(() => isAiGenerating.value = false, 800); }
+    
+    // === 新增：AI 对话生成图表 ===
+    async function generateCustomChart() {
+      if (!aiChartMessage.value.trim()) return showToast('请输入你想生成图表的描述');
+      isAiGenerating.value = true;
+      
+      try {
+        const res = await window.api.charts(aiChartMessage.value);
+        const chartType = res.chartType || 'bar';
+        const title = res.title || 'AI 智能生成';
+        const chartDom = document.getElementById('modalChart4');
+        if (chartDom) {
+          const chart = echarts.getInstanceByDom(chartDom) || echarts.init(chartDom);
+          chart.clear();
+          let option = {};
+          if (chartType === 'pie') {
+            option = {
+              title: { text: title, left: 'center', textStyle: { fontSize: 16 } },
+              tooltip: { trigger: 'item' },
+              legend: { top: 'bottom' },
+              series: [{ type: 'pie', radius: ['40%', '70%'], data: [
+                { value: 150, name: '异常项A' },
+                { value: 200, name: '异常项B' },
+                { value: 300, name: '异常项C' }
+              ] }]
+            };
+          } else {
+            option = {
+              title: { text: title, textStyle: { fontSize: 16 } },
+              tooltip: { trigger: 'axis' },
+              xAxis: { type: 'category', data: ['企业1', '企业2', '企业3', '企业4'] },
+              yAxis: { type: 'value' },
+              series: [{ type: 'bar', data: [120, 200, 150, 80], itemStyle: { color: '#1d4ed8' } }]
+            };
+          }
+          chart.setOption(option);
+          showToast('AI 已为您更新图表');
+        }
+      } catch (e) {
+        showToast('AI 生成图表失败');
+      } finally {
+        isAiGenerating.value = false;
+      }
+    }
+
     function exportChartsToZip() { isExporting.value = true; setTimeout(() => { isExporting.value = false; showToast('图表压缩包已生成'); }, 800); }
+    
     function renderCharts() {
       const charts = [
         { id: 'modalChart1', x: ['1月','2月','3月','4月','5月','6月'], y: [120,200,150,280,190,310], t: 'line' },
@@ -145,7 +230,7 @@ createApp({
       ];
       charts.forEach(c => {
         const el = document.getElementById(c.id); if (!el) return;
-        const chart = echarts.init(el);
+        const chart = echarts.getInstanceByDom(el) || echarts.init(el);
         const opt = c.t === 'pie'
           ? { series: [{ type: 'pie', radius: '60%', data: c.x.map((k, i) => ({ name: k, value: c.y[i] })) }] }
           : { tooltip: {}, xAxis: { type: 'category', data: c.x }, yAxis: { type: 'value' }, series: [{ type: c.t, data: c.y, smooth: true, itemStyle: { color: '#1d4ed8' } }] };
@@ -166,7 +251,7 @@ createApp({
     const editNickname = ref('普通用户');
     const editGender = ref('男');
     const editBirthday = ref('1990-01-01');
-    const editEmail = ref('admin@aegisdata.com');
+    const editEmail = ref('1@aegisdata.com');
     const editPhone = ref('13800000000');
     const editAvatar = ref('');
     const oldPassword = ref('');
@@ -208,7 +293,7 @@ createApp({
       aiAnalysisComplete, aiElapsedTime, aiTasks, activeAiTaskIndex, suggestionsData,
       showChartModal, aiChartMessage, isAiGenerating, isExporting, showExplainModal, explainLoading, explainText,
       toastMsg, loginAccount, password, errorMsg, logging, showSettingsModal,
-      selectIndustry, handleLogin, logout, closeUserMenu, closeLeftUserMenu, createProject, resetWorkflow,
+      selectIndustry, handleLogin, logout, closeUserMenu, closeLeftUserMenu, createProject, openProject, resetWorkflow,
       handleUploadAndGoFilter, handleFilter, skipFilter, onConditionChange, confirmFilter, resetFilterInput,
       goToReport, toggleEvidence, handleExplain, openChartModal, generateCustomChart, exportChartsToZip,
       settingsTab, settingsTabs, editNickname, editGender, editBirthday, editEmail, editPhone, editAvatar,
