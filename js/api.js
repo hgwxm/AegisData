@@ -1,5 +1,6 @@
 // js/api.js —— 统一接口层，后端接入只需改 BASE_URL 与 request 实现
 const BASE_URL = '/';
+const BACKEND_URL = 'http://localhost:8080'; // ★ 后端端口（联调时改这里）
 
 function request(url, options = {}) {
   const token = localStorage.getItem('token') || '';
@@ -42,11 +43,30 @@ function mockRequest(url, method, body, headers) {
     rows: Array.from({ length: 8 }, (_, i) => ({ id: i + 1, name: '示例企业' + (i + 1), risk: i % 3 === 0 ? '高' : '中' }))
   });
 
-  // 异常数据
+  // ===== 异常数据（已补全关联证据记录、AI判定、分析流水数）=====
   if (url.includes('/api/anomalies')) return delay({
-    list: Array.from({ length: 10 }, (_, i) => ({ id: i + 1, company: '异常企业' + (i + 1), level: ['高','中','低'][i%3], desc: '数据关联异常' })),
-    total: 10
-  });
+    list: Array.from({ length: 10 }, (_, i) => {
+      const evidenceCount = i === 0 ? 13 : (i % 4 === 0 ? 5 : (i % 3 === 0 ? 3 : 2));
+      return {
+        id: i + 1,
+        company: '异常企业' + (i + 1),
+        level: ['高','中','低'][i % 3],
+        field: ['金额异常', '频次异常', '时间异常', '关联方异常'][i % 4],
+        riskLevel: ['高','中','低'][i % 3],
+        description: i === 0
+          ? `[行7] 日期+金额+科目+经办人完全重复，共 ${evidenceCount} 笔`
+          : `该笔交易与历史基线存在显著偏离，涉及${evidenceCount}条关联记录`,
+        evidenceRecords: Array.from({ length: evidenceCount }, (_, j) => ({
+          date: '2025-0' + ((j % 9) + 1) + '-' + String((j % 28) + 1).padStart(2, '0'),
+          subject: '异常企业' + (i + 1),
+          amount: (Math.random() * 50000 + 10000).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','),
+          desc: i === 0 ? '重复报销凭证' : '异常关联凭证'
+        }))
+      };
+    }),
+    total: 10,
+    analyzedCount: 12840
+  }, 8000);
 
   // AI解读
   if (url.includes('/api/explain')) return delay({ text: '当前数据整体风险偏高，建议重点关注注册资本异常与关联企业交叉持股情况。' });
@@ -62,9 +82,8 @@ function mockRequest(url, method, body, headers) {
     ]
   });
 
-  // 图表（修改：支持 AI 对话生成）
+  // 图表（支持 AI 对话生成）
   if (url.includes('/api/charts')) {
-    // 如果带了 message 参数（POST 过来的），说明是 AI 生成需求
     if (b.message) {
       return delay({ 
         chartType: b.message.includes('占比') || b.message.includes('饼图') ? 'pie' : 'bar',
@@ -73,7 +92,6 @@ function mockRequest(url, method, body, headers) {
         metric: 'amount'
       }, 800);
     }
-    // 如果不带参数，说明是获取默认图表数据（保留你原来的）
     return delay({
       riskPie: [{ value: 120, name: '高风险' }, { value: 260, name: '中风险' }, { value: 420, name: '低风险' }],
       trend: { months: ['1月','2月','3月','4月','5月','6月'], values: [120,200,150,280,190,310] },
@@ -117,6 +135,37 @@ function mockRequest(url, method, body, headers) {
     { id: 2, device: 'Safari / iOS', time: '2026-11-15 08:14', location: '北京', current: false }
   ]);
 
+  // ★★★ 以下为新增：项目结果存储/读取 + 报告下载 ★★★
+
+  // 保存项目审计结果
+  if (url.includes('/api/project/save')) {
+    console.log('[mock] 项目结果已保存', b);
+    return delay({ success: true, message: '项目结果已保存' }, 200);
+  }
+
+  // 读取项目审计结果
+  if (url.match(/\/api\/project\/\d+$/)) {
+    // mock：返回未完成的空结果（让前端走新建流程）
+    // 实际联调时后端返回 { completed: true, ... } 或 { completed: false }
+    return delay({ completed: false }, 200);
+  }
+
+  // 项目列表（带完成状态）
+  if (url.includes('/api/project/list')) {
+    return delay([
+      { id: 1, name: '2025年度财务合规审计', industry: '制造业', completed: false, createTime: '2025-01-01' },
+      { id: 2, name: '2024年度内控审计', industry: '制造业', completed: true, createTime: '2024-06-01' },
+      { id: 3, name: '2025供应商专项审计', industry: '供应链', completed: false, createTime: '2025-02-01' }
+    ], 200);
+  }
+
+  // 下载审计报告
+  if (url.includes('/api/report/download')) {
+    // mock：返回一个假的 docx blob（实际联调时后端返回真实文件流）
+    const mockDocx = new Blob(['mock docx content'], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    return delay(mockDocx, 500);
+  }
+
   return Promise.reject(new Error('接口未定义：' + url));
 }
 
@@ -132,7 +181,6 @@ const api = {
   explain: data => request('/api/explain', { method: 'POST', body: JSON.stringify(data) }),
   chat: data => request('/api/chat', { method: 'POST', body: JSON.stringify(data) }),
   suggestions: params => request('/api/suggestions' + (params ? '?' + new URLSearchParams(params) : '')),
-  // 修改：支持 POST 传 message
   charts: params => {
     if (typeof params === 'string') {
       return request('/api/charts', { method: 'POST', body: JSON.stringify({ message: params }) });
@@ -151,7 +199,12 @@ const api = {
     updatePreferences: data => request('/api/user/preferences', { method: 'PUT', body: JSON.stringify(data) }),
     getLogs: () => request('/api/user/logs'),
     getSessions: () => request('/api/user/sessions')
-  }
+  },
+  // ★★★ 新增：项目接口 + 报告下载 ★★★
+  saveProjectResult: data => request('/api/project/save', { method: 'POST', body: JSON.stringify(data) }),
+  getProjectResult: (projectId) => request(`/api/project/${projectId}`),
+  getProjectList: () => request('/api/project/list'),
+  downloadReport: data => request('/api/report/download', { method: 'POST', body: JSON.stringify(data) })
 };
 
 window.api = api;

@@ -1,4 +1,4 @@
-// js/app.js —— 完整版，已集成 AI 对话生成图表
+// js/app.js —— 完整版，已集成 AI 对话生成图表 + 修复AI分析计时 + 修复AI解读弹窗 + 修复图表动态字段 + 下载真实报告
 const { createApp, ref, reactive } = Vue;
 
 // 点击外部关闭指令
@@ -60,6 +60,7 @@ createApp({
     const aiChartMessage = ref('');
     const isAiGenerating = ref(false);
     const isExporting = ref(false);
+    const isDownloading = ref(false);
     const showExplainModal = ref(false);
     const explainLoading = ref(false);
     const explainText = ref('');
@@ -83,35 +84,27 @@ createApp({
     function closeUserMenu() { showUserMenu.value = false; }
     function closeLeftUserMenu() { showLeftUserMenu.value = false; }
 
-    // ===== 项目互斥归档逻辑 =====
-    // 判断一个项目是否属于本月
     function isProjectThisMonth(proj) {
-      if (!proj || !proj.createdAt) return true; // 没有创建时间的默认算本月
+      if (!proj || !proj.createdAt) return true;
       const now = new Date();
       const created = new Date(proj.createdAt);
       return created.getFullYear() === now.getFullYear() && created.getMonth() === now.getMonth();
     }
 
-    // 新建项目：旧当前项目归档到本月或历史（互斥，不重复）
     function createProject() {
       if (!newProjectName.value) return showToast('请输入项目名称');
       if (currentProject.value && currentProject.value.name) {
         const old = { ...currentProject.value };
-        // 先从两个分组里都清掉，保证不重复
         monthlyProjects.value = monthlyProjects.value.filter(p => p.name !== old.name);
         historyProjects.value = historyProjects.value.filter(p => p.name !== old.name);
-        // 只塞进唯一一个分组
-        if (isProjectThisMonth(old)) {
-          monthlyProjects.value.push(old);
-        } else {
-          historyProjects.value.push(old);
-        }
+        if (isProjectThisMonth(old)) monthlyProjects.value.push(old);
+        else historyProjects.value.push(old);
       }
       currentProject.value = { name: newProjectName.value, createdAt: new Date().toISOString() };
       showNewProjectModal.value = false; newProjectName.value = ''; currentStep.value = 1;
     }
 
-    // 点击本月/历史项目切回当前
+    // ★★★ 改动：openProject 增加接口2调用（查项目结果） ★★★
     function openProject(p, group) {
       monthlyProjects.value = monthlyProjects.value.filter(x => x.name !== p.name);
       historyProjects.value = historyProjects.value.filter(x => x.name !== p.name);
@@ -123,7 +116,34 @@ createApp({
         else historyProjects.value.push(old);
       }
       currentProject.value = { ...p };
-      currentStep.value = 1;
+      // ★ 新增：查后端有没有这个项目的结果
+      if (p.id) {
+        window.api.getProjectResult(p.id).then(data => {
+          if (data && data.completed) {
+            // 有结果 → 直接跳第4步，回填数据
+            currentStep.value = 4;
+            filterMatchCount.value = data.analyzed || 0;
+            currentAnomalies.value = data.anomalies || [];
+            suggestionsData.value = {
+              overallRisk: data.overallRisk || '',
+              keyIssues: data.keyIssues || [],
+              measures: data.measures || [],
+              internalControl: data.internalControl || [],
+              followUp: data.followUp || []
+            };
+            aiAnalysisComplete.value = true;
+            showToast('已加载项目审计结果');
+          } else {
+            // 没做过 → 走原逻辑
+            currentStep.value = 1;
+          }
+        }).catch(() => {
+          // 接口没就绪，走原逻辑
+          currentStep.value = 1;
+        });
+      } else {
+        currentStep.value = 1;
+      }
     }
 
     function resetWorkflow() { currentStep.value = 1; aiAnalysisComplete.value = false; }
@@ -138,6 +158,8 @@ createApp({
     function onConditionChange() { filterMatchCount.value = 3261; }
     function confirmFilter() { currentStep.value = 3; runAiAnalysis(); }
     function resetFilterInput() { filterMessage.value = ''; showFilterResult.value = false; filterExplanation.value = ''; }
+
+    // ===== AI 分析（方案B：真实接口驱动计时）=====
     function runAiAnalysis() {
       aiTasks.value = [
         { text: '解析财务凭证数据结构', done: false },
@@ -145,45 +167,103 @@ createApp({
         { text: '关联企业股权与供应商网络', done: false },
         { text: '生成风险评级', done: false }
       ];
+
+      if (window._aiTimer) { clearInterval(window._aiTimer); window._aiTimer = null; }
+
+      aiElapsedTime.value = 0;
+      aiAnalysisComplete.value = false;
+
+      const startTime = Date.now();
       let i = 0;
-      const t = setInterval(() => {
-        aiElapsedTime.value++;
-        if (i < aiTasks.value.length) { aiTasks.value[i].done = true; i++; activeAiTaskIndex.value = i; }
-        if (aiElapsedTime.value >= 8) {
-          clearInterval(t); aiAnalysisComplete.value = true;
-          currentAnomalies.value = Array.from({ length: 8 }, (_, i) => ({
-            id: i + 1, field: ['金额异常','频次异常','时间异常','关联方异常'][i % 4],
-            riskLevel: ['高','中','低'][i % 3], description: '系统检测到该笔交易与历史基线存在显著偏离',
-            evidenceRecords: Array.from({ length: 3 }, (_, j) => ({ date: '2025-01-' + (j + 10), subject: '示例企业', amount: '128,000', desc: '对应凭证' }))
-          }));
-          suggestionsData.value = {
-            overallRisk: '高',
-            keyIssues: ['部分交易缺乏对应合同支撑', '关联供应商集中度高'],
-            measures: ['补充交易背景说明材料', '建立供应商准入复核机制'],
-            internalControl: ['完善审批分级授权', '强化跨部门数据核对'],
-            followUp: ['30日内完成整改', '下季度复核']
-          };
+
+      window._aiTimer = setInterval(() => {
+        aiElapsedTime.value = Math.floor((Date.now() - startTime) / 1000);
+        if (i < aiTasks.value.length && aiElapsedTime.value >= (i + 1) * 2) {
+          aiTasks.value[i].done = true;
+          i++;
+          activeAiTaskIndex.value = i;
         }
-      }, 300);
+      }, 1000);
+
+      api.anomalies().then(res => {
+        clearInterval(window._aiTimer);
+        window._aiTimer = null;
+        aiAnalysisComplete.value = true;
+        aiElapsedTime.value = Math.floor((Date.now() - startTime) / 1000);
+        currentRecords.value = Array.from({ length: (res && res.analyzedCount) || 12840 }, (_, i) => ({ id: i + 1 }));
+        currentAnomalies.value = (res && res.list) ? res.list : Array.from({ length: 8 }, (_, i) => ({
+          id: i + 1,
+          field: ['金额异常', '频次异常', '时间异常', '关联方异常'][i % 4],
+          riskLevel: ['高', '中', '低'][i % 3],
+          description: '系统检测到该笔交易与历史基线存在显著偏离',
+          evidenceRecords: Array.from({ length: 3 }, (_, j) => ({
+            date: '2025-01-' + (j + 10), subject: '示例企业', amount: '128,000', desc: '对应凭证'
+          }))
+        }));
+        suggestionsData.value = {
+          overallRisk: '高',
+          keyIssues: ['部分交易缺乏对应合同支撑', '关联供应商集中度高'],
+          measures: ['补充交易背景说明材料', '建立供应商准入复核机制'],
+          internalControl: ['完善审批分级授权', '强化跨部门数据核对'],
+          followUp: ['30日内完成整改', '下季度复核']
+        };
+
+        // ★★★ 新增：AI分析完成后自动保存结果到后端（接口1） ★★★
+        if (currentProject.value && currentProject.value.id) {
+          const resultData = {
+            projectId: currentProject.value.id,
+            projectName: currentProject.value.name || '',
+            industry: selectedIndustry.value && selectedIndustry.value.name || '',
+            analyzed: currentRecords.value.length || 0,
+            anomalyCount: currentAnomalies.value.length || 0,
+            overallRisk: suggestionsData.value.overallRisk,
+            keyIssues: suggestionsData.value.keyIssues,
+            measures: suggestionsData.value.measures,
+            internalControl: suggestionsData.value.internalControl,
+            followUp: suggestionsData.value.followUp,
+            anomalies: currentAnomalies.value,
+            completed: true
+          };
+          window.api.saveProjectResult(resultData).then(res => {
+            if (res && res.success) console.log('✅ 项目结果已保存');
+          }).catch(err => console.error('保存失败', err));
+        }
+      }).catch(err => {
+        clearInterval(window._aiTimer);
+        window._aiTimer = null;
+        showToast('AI 分析请求失败');
+        currentStep.value = 2;
+      });
     }
+
     function goToReport() { currentStep.value = 4; }
     function toggleEvidence(id) { expandedAnomalyId.value = expandedAnomalyId.value === id ? null : id; }
+
     function handleExplain(id, a) {
-      showExplainModal.value = true; explainLoading.value = true; explainText.value = '';
+      showExplainModal.value = true;
+      document.body.style.overflow = 'hidden';
+      explainLoading.value = true; explainText.value = '';
       setTimeout(() => { explainLoading.value = false; explainText.value = '该异常主要源于交易金额与历史均值偏离超过 3 个标准差，且对应凭证缺失。'; }, 600);
     }
-    
+
+    function closeExplainModal() {
+      showExplainModal.value = false;
+      document.body.style.overflow = '';
+    }
+
     function openChartModal() { showChartModal.value = true; setTimeout(renderCharts, 100); }
-    
-    // === 新增：AI 对话生成图表 ===
+
     async function generateCustomChart() {
       if (!aiChartMessage.value.trim()) return showToast('请输入你想生成图表的描述');
       isAiGenerating.value = true;
-      
       try {
         const res = await window.api.charts(aiChartMessage.value);
-        const chartType = res.chartType || 'bar';
-        const title = res.title || 'AI 智能生成';
+        const chartType = res.chartType || res.type || 'bar';
+        const title = res.title || res.chartTitle || res.name || 'AI 智能生成';
+        const aiColor = res.color || res.themeColor || res.series_color || '#1d4ed8';
+        const xData = res.xData || res.xAxis || res.categories || ['企业1', '企业2', '企业3', '企业4'];
+        const yData = res.yData || res.yAxis || res.data || res.values || [120, 200, 150, 80];
+
         const chartDom = document.getElementById('modalChart4');
         if (chartDom) {
           const chart = echarts.getInstanceByDom(chartDom) || echarts.init(chartDom);
@@ -194,33 +274,75 @@ createApp({
               title: { text: title, left: 'center', textStyle: { fontSize: 16 } },
               tooltip: { trigger: 'item' },
               legend: { top: 'bottom' },
-              series: [{ type: 'pie', radius: ['40%', '70%'], data: [
-                { value: 150, name: '异常项A' },
-                { value: 200, name: '异常项B' },
-                { value: 300, name: '异常项C' }
-              ] }]
+              series: [{
+                type: 'pie', radius: ['40%', '70%'],
+                data: xData.map((name, i) => ({ name, value: (yData[i] || 0) })),
+                itemStyle: { color: aiColor }
+              }]
             };
           } else {
             option = {
               title: { text: title, textStyle: { fontSize: 16 } },
               tooltip: { trigger: 'axis' },
-              xAxis: { type: 'category', data: ['企业1', '企业2', '企业3', '企业4'] },
+              xAxis: { type: 'category', data: xData },
               yAxis: { type: 'value' },
-              series: [{ type: 'bar', data: [120, 200, 150, 80], itemStyle: { color: '#1d4ed8' } }]
+              series: [{
+                type: chartType,
+                data: yData,
+                smooth: chartType === 'line',
+                itemStyle: { color: aiColor },
+                lineStyle: chartType === 'line' ? { color: aiColor } : undefined
+              }]
             };
           }
-          chart.setOption(option);
-          showToast('AI 已为您更新图表');
+          chart.setOption(option, true);
+          showToast('AI 已为您更新图表：' + title);
         }
       } catch (e) {
-        showToast('AI 生成图表失败');
+        showToast('AI 生成图表失败：' + (e.message || '网络错误'));
       } finally {
         isAiGenerating.value = false;
       }
     }
 
     function exportChartsToZip() { isExporting.value = true; setTimeout(() => { isExporting.value = false; showToast('图表压缩包已生成'); }, 800); }
-    
+
+    // ★★★ 改动：downloadReportFile 改用 window.api.downloadReport 统一走 api 层 ★★★
+    async function downloadReportFile() {
+      if (!suggestionsData.value) return showToast('请先完成 AI 分析再下载报告');
+      if (isDownloading.value) return;
+      isDownloading.value = true;
+      showToast('AI 正在生成报告，请稍候…');
+      try {
+        const payload = {
+          projectName: (currentProject.value && currentProject.value.name) || '审计项目',
+          industry: selectedIndustry.value && selectedIndustry.value.name,
+          analyzed: (currentRecords.value && currentRecords.value.length) || 0,
+          anomalyCount: (currentAnomalies.value && currentAnomalies.value.length) || 0,
+          overallRisk: suggestionsData.value.overallRisk,
+          keyIssues: suggestionsData.value.keyIssues || [],
+          measures: suggestionsData.value.measures || [],
+          internalControl: suggestionsData.value.internalControl || [],
+          followUp: suggestionsData.value.followUp || [],
+          anomalies: currentAnomalies.value
+        };
+        const blob = await window.api.downloadReport(payload);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${payload.projectName}_审计报告.docx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast('报告已开始下载');
+      } catch (e) {
+        showToast('下载失败：' + (e.message || '网络错误'));
+      } finally {
+        isDownloading.value = false;
+      }
+    }
+
     function renderCharts() {
       const charts = [
         { id: 'modalChart1', x: ['1月','2月','3月','4月','5月','6月'], y: [120,200,150,280,190,310], t: 'line' },
@@ -238,7 +360,7 @@ createApp({
       });
     }
 
-    // ===== 设置弹窗 6 个 tab =====
+    // ===== 设置弹窗 =====
     const settingsTab = ref('profile');
     const settingsTabs = [
       { key: 'profile', label: '基本资料', icon: '👤' },
@@ -291,14 +413,15 @@ createApp({
       currentStep, originalRecords, currentRecords, currentAnomalies, activeReceipt, expandedAnomalyId,
       filterMessage, filterExplanation, showFilterResult, currentConditions, filterMatchCount,
       aiAnalysisComplete, aiElapsedTime, aiTasks, activeAiTaskIndex, suggestionsData,
-      showChartModal, aiChartMessage, isAiGenerating, isExporting, showExplainModal, explainLoading, explainText,
+      showChartModal, aiChartMessage, isAiGenerating, isExporting, isDownloading, showExplainModal, explainLoading, explainText,
       toastMsg, loginAccount, password, errorMsg, logging, showSettingsModal,
       selectIndustry, handleLogin, logout, closeUserMenu, closeLeftUserMenu, createProject, openProject, resetWorkflow,
       handleUploadAndGoFilter, handleFilter, skipFilter, onConditionChange, confirmFilter, resetFilterInput,
-      goToReport, toggleEvidence, handleExplain, openChartModal, generateCustomChart, exportChartsToZip,
+      goToReport, toggleEvidence, handleExplain, closeExplainModal, openChartModal, generateCustomChart, exportChartsToZip,
+      downloadReportFile,
       settingsTab, settingsTabs, editNickname, editGender, editBirthday, editEmail, editPhone, editAvatar,
       oldPassword, newPassword, confirmPassword, notifyPrefs, notifyLabel, notifyDesc, userLogs, userSessions, darkMode,
-      openSettings, handleAvatarUpload, saveSettings, showToast
+      openSettings, handleAvatarUpload, saveSettings, showToast, runAiAnalysis
     };
   }
 }).directive('click-outside', clickOutside).mount('#app');

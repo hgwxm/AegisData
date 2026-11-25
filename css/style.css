@@ -1041,3 +1041,47 @@ body[data-single] .page.is-shown { display: flex; flex-direction: column; flex: 
   height: 22px !important;
   font-size: 11px !important;
 }
+/* ══════════ AI 解读弹窗 ══════════ */
+.explain-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15, 30, 53, .45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.explain-modal {
+  width: 520px; max-width: 100%;
+  max-height: 75vh; /* 关键：最高只占屏幕 75% */
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex; flex-direction: column; /* 关键：纵向排列 */
+  overflow: hidden; /* 关键：防止内容溢出 */
+}
+
+.explain-modal__head {
+  flex-shrink: 0; /* 头部固定不滚 */
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.explain-modal__head h3 { font-size: 15px; font-weight: 650; margin: 0; }
+
+.explain-body {
+  flex: 1; /* 关键：内容区自动撑满剩余空间 */
+  overflow-y: auto; /* 关键：内容超出时自己出滚动条 */
+  padding: 20px;
+  min-height: 80px;
+  max-height: 55vh; /* 限制内容区最大高度 */
+  font-size: 14px; line-height: 1.8; color: var(--ink);
+  white-space: pre-wrap; /* 保留换行 */
+  word-break: break-word; /* 长文本自动换行 */
+}
+
+.explain-modal__foot {
+  flex-shrink: 0; /* 底部固定不滚 */
+  padding: 12px 20px;
+  border-top: 1px solid var(--line-soft);
+  text-align: right;
+}
