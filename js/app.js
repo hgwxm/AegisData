@@ -374,7 +374,7 @@ createApp({
     const editGender = ref('男');
     const editBirthday = ref('1990-01-01');
     const editEmail = ref('1@aegisdata.com');
-    const editPhone = ref('13800000000');
+    const editPhone = ref('13800000001');
     const editAvatar = ref('');
     const oldPassword = ref('');
     const newPassword = ref('');
