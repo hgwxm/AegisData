@@ -1085,3 +1085,828 @@ body[data-single] .page.is-shown { display: flex; flex-direction: column; flex: 
   border-top: 1px solid var(--line-soft);
   text-align: right;
 }
+
+/* ==========================================
+   AegisData 深色模式统一修复
+   第一轮：基础颜色与遗留浅色组件
+   ========================================== */
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+
+    /* 整体背景 */
+    --bg: #111827;
+    --surface: #1e293b;
+    --surface-soft: #202f43;
+    --surface-hi: #29384c;
+
+    /* 边框 */
+    --line: #35445a;
+    --line-soft: #2c3b50;
+
+    /* 文字 */
+    --ink: #f1f5f9;
+    --ink-2: #c0cada;
+    --ink-3: #94a3b8;
+
+    /* 品牌色 */
+    --brand: #60a5fa;
+    --brand-2: #6ba5ff;
+    --brand-soft: #233b5c;
+    --brand-line: #345781;
+
+    /* 状态颜色 */
+    --allow: #4ade80;
+    --allow-bg: #173b30;
+    --allow-line: #286448;
+
+    --deny: #fb8585;
+    --deny-bg: #44292e;
+    --deny-line: #704047;
+
+    --pending: #fbbf58;
+    --pending-bg: #423522;
+    --pending-line: #6c542e;
+
+    /* 阴影 */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.16);
+    --shadow: 0 4px 16px rgba(0,0,0,.18);
+    --shadow-lg: 0 20px 48px rgba(0,0,0,.35);
+}
+
+/* 页面顶部 */
+html[data-theme="dark"] .top {
+    background: #172235;
+    color: var(--ink);
+}
+
+/* Logo区域 */
+html[data-theme="dark"] .top__logo {
+    background: transparent !important;
+}
+
+html[data-theme="dark"] .top__logo img {
+    mix-blend-mode: normal;
+}
+
+/* 侧边栏 */
+html[data-theme="dark"] .sidebar {
+    background: #172235;
+    border-color: var(--line);
+}
+
+/* 导航 */
+html[data-theme="dark"] .nav__item:hover {
+    background: var(--surface-hi);
+    color: var(--ink);
+}
+
+html[data-theme="dark"] .nav__item.is-active .nav__count {
+    background: #293e5b;
+    color: #93bdff;
+}
+
+/* 快速验证场景 */
+html[data-theme="dark"] .scene.is-allow {
+    background: #19382f;
+}
+
+html[data-theme="dark"] .scene.is-deny {
+    background: #40282d;
+}
+
+html[data-theme="dark"] .scene.is-pending {
+    background: #403522;
+}
+
+html[data-theme="dark"] .scene.is-admin {
+    background: #233650;
+}
+
+html[data-theme="dark"] .scene.is-edge {
+    background: #342c4c;
+    border-color: #584777;
+}
+
+/* 判定结果 */
+html[data-theme="dark"] .verdict__icon,
+html[data-theme="dark"] .badge {
+    background: #29384c;
+}
+
+/* 表格 */
+html[data-theme="dark"] .table tbody tr:hover {
+    background: #29384c;
+}
+
+html[data-theme="dark"] .table tbody tr.is-row[aria-selected="true"] {
+    background: #263d5d;
+}
+
+/* 筛选区域 */
+html[data-theme="dark"] .seg {
+    background: #29384c;
+}
+
+html[data-theme="dark"] .seg__btn[aria-pressed="true"] {
+    background: #3a4b63;
+    color: #93bdff;
+}
+
+html[data-theme="dark"] .filter-input:focus,
+html[data-theme="dark"] .condition-row select:focus,
+html[data-theme="dark"] .condition-row input:focus {
+    background: #29384c;
+    color: var(--ink);
+}
+
+/* 审计证据表格 */
+html[data-theme="dark"] .evidence-row td {
+    background: #202f43;
+}
+
+/* 流程节点 */
+html[data-theme="dark"] .phase::before {
+    background: #1e293b;
+    border-color: #64748b;
+}
+
+/* 详情与弹窗 */
+html[data-theme="dark"] .explain-modal,
+html[data-theme="dark"] .drawer {
+    background: var(--surface);
+    color: var(--ink);
+}
+
+/* 代码说明 */
+html[data-theme="dark"] .notes code {
+    color: #cbd5e1;
+}
+
+/* 输入框统一 */
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+    color: var(--ink);
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+    color: var(--ink-3);
+}
+
+/* ==================================================
+   AegisData 全局深色模式
+   通过 html.dark 统一控制
+   ================================================== */
+
+html.dark {
+  color-scheme: dark;
+
+  --bg: #111827;
+  --surface: #1e293b;
+  --surface-soft: #263449;
+  --surface-hi: #334155;
+
+  --line: #334155;
+  --line-soft: #2b3b50;
+
+  --ink: #f1f5f9;
+  --ink-2: #cbd5e1;
+  --ink-3: #94a3b8;
+
+  --brand: #3b82f6;
+  --brand-2: #60a5fa;
+  --brand-soft: #1e3a5f;
+  --brand-line: #31547d;
+
+  --allow: #4ade80;
+  --allow-bg: #153b2b;
+  --allow-line: #276749;
+
+  --deny: #f87171;
+  --deny-bg: #452426;
+  --deny-line: #7f3535;
+
+  --pending: #fbbf24;
+  --pending-bg: #45351b;
+  --pending-line: #76551d;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, .2);
+  --shadow: 0 4px 16px rgba(0, 0, 0, .2);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, .35);
+}
+
+/* 页面基础背景 */
+html.dark body {
+  color: var(--ink);
+  background: var(--bg);
+}
+
+/* 顶部栏和侧边栏 */
+html.dark .top {
+  color: var(--ink);
+  background: #172235;
+  border-color: var(--line);
+}
+
+html.dark .top__title,
+html.dark .top__user b {
+  color: var(--ink);
+}
+
+html.dark .sidebar {
+  background: #172235;
+  border-color: var(--line);
+}
+
+html.dark .nav__item {
+  color: var(--ink-2);
+}
+
+html.dark .nav__item:hover {
+  color: var(--ink);
+  background: var(--surface-hi);
+}
+
+html.dark .nav__item.is-active {
+  color: #93c5fd;
+  background: #263d5e;
+}
+
+html.dark .nav__item.is-active .nav__count {
+  color: #93c5fd;
+  background: #334155;
+}
+
+/* Logo：取消原来的强制白底 */
+html.dark .top__logo {
+  background: transparent !important;
+}
+
+html.dark .top__logo img {
+  mix-blend-mode: normal;
+}
+
+/* 通用卡片和审计流程 */
+html.dark .card,
+html.dark .stat,
+html.dark .workflow-container,
+html.dark .panel-box,
+html.dark .filter-card {
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+/* 卡片内部区域 */
+html.dark .suggestion-block,
+html.dark .filter-input,
+html.dark .condition-row select,
+html.dark .condition-row input,
+html.dark .select select {
+  color: var(--ink);
+  background: var(--surface-soft);
+  border-color: var(--line);
+}
+
+/* 流程步骤 */
+html.dark .step-name {
+  color: var(--ink);
+}
+
+html.dark .step-desc {
+  color: var(--ink-3);
+}
+
+/* 上传区域 */
+html.dark .upload-area h3 {
+  color: var(--ink);
+}
+
+html.dark .upload-area p {
+  color: var(--ink-2);
+}
+
+/* 场景卡片 */
+html.dark .scene,
+html.dark .scene.is-allow,
+html.dark .scene.is-deny,
+html.dark .scene.is-pending,
+html.dark .scene.is-admin,
+html.dark .scene.is-edge {
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+/* 判定图标和标签 */
+html.dark .verdict__icon,
+html.dark .badge {
+  background: var(--surface-soft);
+}
+
+/* 表格 */
+html.dark .table th,
+html.dark .anomaly-table th,
+html.dark .evidence-table th {
+  color: var(--ink-2);
+  background: var(--surface-soft);
+  border-color: var(--line);
+}
+
+html.dark .table td,
+html.dark .anomaly-table td,
+html.dark .evidence-table td {
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+html.dark .table tbody tr:hover,
+html.dark .anomaly-row:hover {
+  background: var(--surface-hi);
+}
+
+html.dark .evidence-row td {
+  background: var(--surface-soft);
+}
+
+/* 输入框及聚焦状态 */
+html.dark .filter-input:focus,
+html.dark .condition-row select:focus,
+html.dark .condition-row input:focus {
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--brand-2);
+}
+
+/* 分段按钮 */
+html.dark .seg__btn[aria-pressed="true"] {
+  color: #93c5fd;
+  background: var(--surface-hi);
+}
+
+/* 建议区域 */
+html.dark .suggestion-block h4 {
+  color: var(--brand-2);
+}
+
+html.dark .suggestion-block ul {
+  color: var(--ink-2);
+}
+
+/* Logo、分隔线及其他边框 */
+html.dark .top__divider,
+html.dark .sidebar__foot::after {
+  background: var(--line);
+}
+
+/* 弹窗 */
+html.dark .modal,
+html.dark .drawer,
+html.dark .modal-content {
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--line);
+}
+/* ===== 左栏项目列表深色模式适配（文字改白） ===== */
+html.dark aside [style*="color: #4a5a72"],
+html.dark aside .menu-item,
+html.dark aside [class*="project"],
+html.dark aside [class*="proj-"] {
+  color: #ffffff !important;
+}
+
+/* 分组标题（本月项目/历史项目）也提亮，偏白灰 */
+html.dark aside [style*="color: #8894a8"][style*="font-weight: 600"],
+html.dark aside .menu-section {
+  color: #d1d5db !important;
+}
+
+/* 鼠标悬停保持白字+浅底 */
+html.dark aside [style*="cursor: pointer"]:hover {
+  background: rgba(255,255,255,0.08) !important;
+  color: #ffffff !important;
+}
+
+/* 选中态（若有） */
+html.dark aside .active,
+html.dark aside [class*="active"] {
+  color: #60a5fa !important; /* 选中可用淡蓝，或改 #fff */
+}
+
+/* 文件夹图标颜色若太暗可忽略，文字已白 */
+
+/* ===== 用户区（左下 + 右上）深色模式昵称改白 ===== */
+/* 右上角（顶栏）用户区 */
+html.dark [class*="user"], 
+html.dark [class*="avatar"],
+html.dark .nickname,
+html.dark [style*="color: #0f1e35"] {
+  color: #ffffff !important;
+}
+
+/* 左下角侧边栏用户区（精准命中你之前的 inline style） */
+html.dark aside [style*="color: #0f1e35"],
+html.dark aside [class*="nickname"],
+html.dark aside [class*="user"] {
+  color: #ffffff !important;
+}
+
+/* 用户区容器深色适配（半透明浅底+细边） */
+html.dark aside [style*="border-top: 1px solid #e6ebf2"],
+html.dark [class*="user-box"],
+html.dark [class*="avatar-box"] {
+  border-top-color: #333 !important;
+  background: rgba(255,255,255,0.03) !important;
+}
+
+/* 悬停背景提亮 */
+html.dark aside [style*="cursor: pointer"][style*="border-radius: 8px"]:hover,
+html.dark [class*="user-item"]:hover {
+  background: rgba(255,255,255,0.08) !important;
+}
+
+/* 下拉菜单深色适配（个人设置/退出登录） */
+html.dark aside [style*="background: #fff"][style*="box-shadow"],
+html.dark [class*="dropdown"],
+html.dark [class*="menu-pop"] {
+  background: #1f1f1f !important;
+  border-color: #333 !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4) !important;
+}
+html.dark aside [style*="color: #4a5a72"][style*="cursor: pointer"],
+html.dark [class*="dropdown"] [class*="item"] {
+  color: #e5e7eb !important;
+}
+html.dark aside [style*="color: #4a5a72"][style*="cursor: pointer"]:hover {
+  background: rgba(255,255,255,0.08) !important;
+  color: #fff !important;
+}
+/* 退出登录红色保持，但提亮一点 */
+html.dark aside [style*="color: #e5484d"] {
+  color: #ff6b6b !important;
+}
+
+/* 右上角胶囊容器边框（若有） */
+html.dark [class*="header"] [class*="user"],
+html.dark [class*="topbar"] [class*="user"] {
+  border-color: #333 !important;
+  background: rgba(255,255,255,0.05) !important;
+}
+/* ===== 用户区昵称强制改白（终极兜底） ===== */
+html.dark .topbar .nickname,
+html.dark .header .nickname,
+html.dark [class*="user"] .nickname,
+html.dark [class*="avatar"] + div,
+html.dark aside > div:last-child div[style*="font-weight: 600"],
+html.dark body div[style*="color: #0f1e35"],
+html.dark div[style*="color: #0f1e35"][style*="font-weight: 600"],
+html.dark div[style*="color: #0f1e35"][style*="overflow: hidden"] {
+  color: #ffffff !important;
+}
+
+/* 右上角精准打击（顶栏右侧胶囊） */
+html.dark .topbar-right,
+html.dark .header-right,
+html.dark [class*="topbar"] [class*="user"],
+html.dark [class*="header"] [class*="user"],
+html.dark [style*="gap: 10px"][style*="cursor: pointer"] div[style*="color"] {
+  color: #ffffff !important;
+}
+
+/* 左下角精准打击（侧边栏底部） */
+html.dark aside [style*="gap: 10px"] div[style*="color: #0f1e35"],
+html.dark aside [style*="align-items: center"][style*="gap: 10px"] div {
+  color: #ffffff !important;
+}
+
+/* 下拉菜单文字也提亮 */
+html.dark aside [style*="background: #fff"] div[style*="color: #4a5a72"],
+html.dark [class*="dropdown"] div {
+  color: #e5e7eb !important;
+}
+html.dark aside [style*="background: #fff"] div[style*="color: #4a5a72"]:hover {
+  background: rgba(255,255,255,0.08) !important;
+  color: #fff !important;
+}
+/* ===== 右上角 + 左下角 昵称强制白（精准命中内联） ===== */
+
+/* 右上角：顶栏右侧用户胶囊（你代码里是 gap:10px + cursor:pointer + 普头像） */
+html.dark body div[style*="gap: 10px"][style*="cursor: pointer"] div[style*="font-weight: 600"],
+html.dark [style*="gap: 10px"][style*="cursor: pointer"] div[style*="color: #0f1e35"],
+html.dark [style*="gap: 10px"][style*="cursor: pointer"] div[style*="overflow: hidden"] {
+  color: #ffffff !important;
+}
+
+/* 左下角：侧边栏底部（同样结构，但在 aside 里） */
+html.dark aside div[style*="gap: 10px"][style*="cursor: pointer"] div[style*="font-weight: 600"],
+html.dark aside div[style*="gap: 10px"][style*="cursor: pointer"] div[style*="color: #0f1e35"],
+html.dark aside div[style*="gap: 10px"][style*="cursor: pointer"] div[style*="overflow: hidden"] {
+  color: #ffffff !important;
+}
+
+/* 兜底：任何深色模式下 color 为 #0f1e35 的 div 都变白（排除按钮/特殊） */
+html.dark div[style*="color: #0f1e35"]:not(button):not([style*="background"]) {
+  color: #ffffff !important;
+}
+
+/* 右上角胶囊容器背景（若需要半透明深色） */
+html.dark [style*="border-radius"][style*="cursor: pointer"][style*="gap: 10px"] {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+/* 下拉菜单（个人设置/退出）深色 */
+html.dark aside div[style*="background: #fff"][style*="box-shadow"],
+html.dark div[style*="background: #fff"][style*="box-shadow: 0 8px 24px"] {
+  background: #1f1f1f !important;
+  border-color: #333 !important;
+}
+html.dark div[style*="background: #fff"] div[style*="color: #4a5a72"] {
+  color: #e5e7eb !important;
+}
+html.dark div[style*="background: #fff"] div[style*="color: #4a5a72"]:hover {
+  background: rgba(255,255,255,0.08) !important;
+  color: #fff !important;
+}
+html.dark div[style*="color: #e5484d"] { color: #ff6b6b !important; }
+/* ===== Logo 双图显隐 ===== */
+.logo-light { display: block; }
+.logo-dark  { display: none; }
+html.dark .logo-light { display: none; }
+html.dark .logo-dark  { display: block; }
+
+/* ===== 用户昵称（浅色深色统一由 CSS 控制） ===== */
+.user-nickname {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f1e35;
+}
+html.dark .user-nickname {
+  color: #ffffff !important;
+}
+
+/* ===== 用户区容器深色适配 ===== */
+html.dark .side-user {
+  border-top-color: #333 !important;
+  background: rgba(255,255,255,0.03) !important;
+}
+html.dark .top-user {
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}
+
+/* ===== 下拉菜单深色适配 ===== */
+html.dark .user-dropdown {
+  background: #1f1f1f !important;
+  border: 1px solid #333 !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4) !important;
+}
+html.dark .user-dropdown .menu-item {
+  color: #e5e7eb !important;
+}
+html.dark .user-dropdown .menu-item:hover {
+  background: rgba(255,255,255,0.08) !important;
+  color: #ffffff !important;
+}
+html.dark .user-dropdown .menu-item.logout {
+  color: #ff6b6b !important;
+}
+
+/* ===== 左栏项目文字深色改白 ===== */
+html.dark .proj-item {
+  color: #ffffff !important;
+}
+html.dark .menu-section {
+  color: #d1d5db !important;
+}
+/* ===== 个人设置弹窗 深色模式全白字适配 ===== */
+html.dark .modal-mask [style*="个人设置"],
+html.dark .modal-mask .card {
+  background: #1f1f1f !important;
+  border-color: #333 !important;
+}
+
+/* 左侧菜单文字 */
+html.dark .modal-mask [style*="基本资料"],
+html.dark .modal-mask [style*="账号安全"],
+html.dark .modal-mask [style*="通知设置"],
+html.dark .modal-mask [style*="操作日志"],
+html.dark .modal-mask [style*="登录记录"],
+html.dark .modal-mask [style*="外观设置"] {
+  color: #ffffff !important;
+}
+html.dark .modal-mask [style*="通知设置"] {
+  background: rgba(255,255,255,0.1) !important;
+}
+
+/* 右侧标题与描述（覆盖内联 #0f1e35 / #4a5a72 / #8894a8） */
+html.dark .modal-mask [style*="font-weight: 600"][style*="color"],
+html.dark .modal-mask div[style*="color:#0f1e35"],
+html.dark .modal-mask div[style*="color:#4a5a72"],
+html.dark .modal-mask div[style*="color:#8894a8"],
+html.dark .modal-mask label div[style*="color"] {
+  color: #ffffff !important;
+}
+
+/* 分割线 */
+html.dark .modal-mask [style*="border-bottom:1px solid #eef2f7"] {
+  border-bottom-color: #333 !important;
+}
+
+/* 底部操作栏（原白色背景改深色） */
+html.dark .modal-mask [style*="background: #ffffff"][style*="border-top"] {
+  background: #1f1f1f !important;
+  border-top-color: #333 !important;
+}
+html.dark .modal-mask [style*="background: #ffffff"] button.btn-secondary {
+  background: #333 !important;
+  color: #fff !important;
+  border-color: #555 !important;
+}
+
+/* 表格文字（操作日志/登录记录） */
+html.dark .modal-mask table td,
+html.dark .modal-mask table th {
+  color: #ffffff !important;
+  border-color: #333 !important;
+}
+html.dark .modal-mask table thead th {
+  background: #2a2a2a !important;
+}
+
+/* 输入框/复选框区域保持可见 */
+html.dark .modal-mask input[type="checkbox"] {
+  accent-color: #6d28d9 !important;
+}
+/* ===== 个人设置弹窗 深色模式 强制白字/深底适配（修正版） ===== */
+
+/* 1. 弹窗主体背景（覆盖内联白底/浅灰底） */
+html.dark .card[style*="background: #ffffff"],
+html.dark .modal-mask .card,
+html.dark div[style*="background: #ffffff"][style*="border-radius"] {
+  background: #1f1f1f !important;
+  border-color: #333 !important;
+  color: #ffffff !important;
+}
+
+/* 2. 左侧菜单区背景与文字 */
+html.dark .card [style*="background: #f8fafc"],
+html.dark .card [style*="background:#f8fafc"] {
+  background: #2a2a2a !important;
+  border-color: #333 !important;
+}
+html.dark .card [style*="color: #0f1e35"],
+html.dark .card [style*="color:#0f1e35"],
+html.dark .card [style*="color: #4a5a72"],
+html.dark .card [style*="color:#4a5a72"],
+html.dark .card [style*="color: #8894a8"],
+html.dark .card [style*="color:#8894a8"] {
+  color: #ffffff !important;
+}
+/* 左侧高亮项（通知设置） */
+html.dark .card [style*="background: #ffffff"][style*="border-radius: 8px"],
+html.dark .card [style*="background:#ffffff"][style*="border-radius:8px"] {
+  background: rgba(109, 40, 217, 0.25) !important;
+  color: #ffffff !important;
+}
+
+/* 3. 右侧内容区：强制所有描述文字变白（最核心修复） */
+html.dark .card div[style*="font-size:14px"],
+html.dark .card div[style*="font-size: 14px"],
+html.dark .card div[style*="font-size:13px"],
+html.dark .card div[style*="font-size: 13px"],
+html.dark .card div[style*="font-size:12px"],
+html.dark .card div[style*="font-size: 12px"] {
+  color: #ffffff !important;
+}
+/* 右侧标题（font-weight:600） */
+html.dark .card div[style*="font-weight: 600"],
+html.dark .card div[style*="font-weight:600"] {
+  color: #ffffff !important;
+}
+
+/* 4. 分割线 */
+html.dark .card [style*="border-bottom:1px solid #eef2f7"],
+html.dark .card [style*="border-bottom: 1px solid #eef2f7"] {
+  border-bottom-color: #444 !important;
+}
+
+/* 5. 底部操作栏（取消/保存按钮区）—— 强制深灰底 */
+html.dark .card > div[style*="background: #ffffff"][style*="border-top"],
+html.dark .card > div[style*="background:#ffffff"][style*="border-top"] {
+  background: #1f1f1f !important;
+  border-top-color: #333 !important;
+}
+/* 取消按钮（原深灰/黑底，确保文字白） */
+html.dark .card .btn-secondary {
+  background: #333 !important;
+  color: #fff !important;
+  border-color: #555 !important;
+}
+/* 保存按钮保持蓝底白字即可，若需加深可加：
+html.dark .card .btn-primary { background: #6d28d9 !important; }
+*/
+
+/* 6. 表格（操作日志/登录记录） */
+html.dark .card table td,
+html.dark .card table th {
+  color: #ffffff !important;
+  border-color: #444 !important;
+}
+html.dark .card table thead th {
+  background: #2a2a2a !important;
+}
+
+/* 7. 复选框（通知设置）保持蓝色，增加暗色背景对比 */
+html.dark .card input[type="checkbox"] {
+  accent-color: #6d28d9 !important;
+  background: #fff;
+}
+/* ===== 步骤条（Workflow Steps）深色模式白底黑字适配 ===== */
+
+/* 整个步骤条容器（白底保留，文字转黑） */
+html.dark .workflow-steps,
+html.dark .workflow-steps * {
+  color: #0f1e35 !important;
+}
+
+/* 未激活步骤（2/3/4）原本灰色，白底下加深一点保证可读 */
+html.dark .step:not(.active):not(.done) .step-name,
+html.dark .step:not(.active):not(.done) .step-desc {
+  color: #4a5a72 !important;
+}
+
+/* 步骤连线（白底下灰色线保留，若太浅可调） */
+html.dark .step-line {
+  background: #d1d9e6 !important;
+}
+html.dark .step-line.active {
+  background: #1d4ed8 !important;
+}
+
+/* 步骤图标圆圈：激活态蓝底白字，未激活白底黑字边框 */
+html.dark .step-icon {
+  background: #ffffff !important;
+  color: #0f1e35 !important;
+  border: 1px solid #d1d9e6;
+}
+html.dark .step.active .step-icon,
+html.dark .step.done .step-icon {
+  background: #1d4ed8 !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8;
+}
+
+/* 若外层容器有内联白底，确保不影响 */
+html.dark [style*="background: #ffffff"] .workflow-steps,
+html.dark [style*="background:#ffffff"] .workflow-steps {
+  background: transparent !important;
+}
+/* ===== 步骤条深色模式：白底 + 全黑字 ===== */
+html.dark .workflow-steps,
+html.dark .workflow-steps * {
+  color: #000000 !important;
+}
+
+/* 连线保持可见 */
+html.dark .step-line {
+  background: #999999 !important;
+}
+html.dark .step-line.active {
+  background: #000000 !important;
+}
+
+/* 图标圆圈：未激活白底黑字带边框，激活态黑底白字 */
+html.dark .step-icon {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #000000;
+  box-shadow: none !important;
+}
+html.dark .step.active .step-icon,
+html.dark .step.done .step-icon {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000;
+}
+/* ===== 仅“文件解析完成！共 X 条记录”变白（其他不动） ===== */
+html.dark span:contains("文件解析完成"),
+html.dark div:contains("文件解析完成"),
+html.dark p:contains("文件解析完成") {
+  color: #ffffff !important;
+}
+
+/* 兼容：带文档图标(📄/svg)的相邻文本，含“条记录” */
+html.dark [class*="icon"] + span,
+html.dark [class*="icon"] + div,
+html.dark svg + span,
+html.dark svg + div {
+  color: #ffffff !important;
+}
+
+/* 终极兜底：只要文本含“条记录”且非白底，强制白 */
+html.dark *:not([style*="background:#fff"]):not([style*="background: #fff"]):not([style*="background:white"]):contains("条记录") {
+  color: #ffffff !important;
+}

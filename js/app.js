@@ -1,4 +1,3 @@
-// js/app.js —— 完整版，已集成 AI 对话生成图表 + 修复AI分析计时 + 修复AI解读弹窗 + 修复图表动态字段 + 下载真实报告
 const { createApp, ref, reactive } = Vue;
 
 // 点击外部关闭指令
@@ -73,6 +72,14 @@ createApp({
 
     const showToast = (msg) => { toastMsg.value = msg; setTimeout(() => toastMsg.value = '', 1800); };
 
+    // ★★★ 新增：页面加载时恢复深色模式 ★★★
+    const darkMode = ref(false);
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      darkMode.value = true;
+      document.documentElement.classList.add('dark');
+    }
+
     // ===== 页面方法 =====
     function selectIndustry(ind) { selectedIndustry.value = ind; currentPage.value = 'login'; }
     function handleLogin() {
@@ -104,7 +111,6 @@ createApp({
       showNewProjectModal.value = false; newProjectName.value = ''; currentStep.value = 1;
     }
 
-    // ★★★ 改动：openProject 增加接口2调用（查项目结果） ★★★
     function openProject(p, group) {
       monthlyProjects.value = monthlyProjects.value.filter(x => x.name !== p.name);
       historyProjects.value = historyProjects.value.filter(x => x.name !== p.name);
@@ -116,11 +122,9 @@ createApp({
         else historyProjects.value.push(old);
       }
       currentProject.value = { ...p };
-      // ★ 新增：查后端有没有这个项目的结果
       if (p.id) {
         window.api.getProjectResult(p.id).then(data => {
           if (data && data.completed) {
-            // 有结果 → 直接跳第4步，回填数据
             currentStep.value = 4;
             filterMatchCount.value = data.analyzed || 0;
             currentAnomalies.value = data.anomalies || [];
@@ -134,11 +138,9 @@ createApp({
             aiAnalysisComplete.value = true;
             showToast('已加载项目审计结果');
           } else {
-            // 没做过 → 走原逻辑
             currentStep.value = 1;
           }
         }).catch(() => {
-          // 接口没就绪，走原逻辑
           currentStep.value = 1;
         });
       } else {
@@ -159,7 +161,6 @@ createApp({
     function confirmFilter() { currentStep.value = 3; runAiAnalysis(); }
     function resetFilterInput() { filterMessage.value = ''; showFilterResult.value = false; filterExplanation.value = ''; }
 
-    // ===== AI 分析（方案B：真实接口驱动计时）=====
     function runAiAnalysis() {
       aiTasks.value = [
         { text: '解析财务凭证数据结构', done: false },
@@ -208,7 +209,6 @@ createApp({
           followUp: ['30日内完成整改', '下季度复核']
         };
 
-        // ★★★ 新增：AI分析完成后自动保存结果到后端（接口1） ★★★
         if (currentProject.value && currentProject.value.id) {
           const resultData = {
             projectId: currentProject.value.id,
@@ -307,7 +307,6 @@ createApp({
 
     function exportChartsToZip() { isExporting.value = true; setTimeout(() => { isExporting.value = false; showToast('图表压缩包已生成'); }, 800); }
 
-    // ★★★ 改动：downloadReportFile 改用 window.api.downloadReport 统一走 api 层 ★★★
     async function downloadReportFile() {
       if (!suggestionsData.value) return showToast('请先完成 AI 分析再下载报告');
       if (isDownloading.value) return;
@@ -391,7 +390,6 @@ createApp({
       { id: 1, time: '2026-11-23 10:12', ip: '192.168.1.10', location: '中国·南京', device: 'Chrome / Windows', status: '成功' },
       { id: 2, time: '2026-11-21 09:05', ip: '192.168.1.22', location: '中国·上海', device: 'Safari / macOS', status: '失败' }
     ]);
-    const darkMode = ref(false);
 
     function openSettings() { showSettingsModal.value = true; settingsTab.value = 'profile'; }
     function handleAvatarUpload(e) {
@@ -400,12 +398,34 @@ createApp({
       reader.onload = (ev) => { editAvatar.value = ev.target.result; };
       reader.readAsDataURL(file);
     }
-    function saveSettings() {
-      if (settingsTab.value === 'security' && newPassword.value && newPassword.value !== confirmPassword.value) return showToast('两次密码不一致');
-      showToast('保存成功');
-      showSettingsModal.value = false;
-      oldPassword.value = newPassword.value = confirmPassword.value = '';
-    }
+
+    // ★★★ 改动：saveSettings 加入深色模式切换 + 内联白底清理 ★★★
+
+function saveSettings() {
+  if (
+    settingsTab.value === 'security' &&
+    newPassword.value &&
+    newPassword.value !== confirmPassword.value
+  ) {
+    return showToast('两次密码不一致');
+  }
+
+  // 统一切换深色 / 浅色主题
+  if (darkMode.value) {
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('theme', 'light');
+  }
+
+  showToast('保存成功');
+  showSettingsModal.value = false;
+
+  oldPassword.value = '';
+  newPassword.value = '';
+  confirmPassword.value = '';
+}
 
     return {
       currentPage, industries, selectedIndustry, nickname, showUserMenu, showLeftUserMenu,

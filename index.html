@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <!-- ★★★ 新增：防闪烁预加载 ★★★ -->
+  <script>(function(){if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')})();</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AegisData · 智能财务审计平台</title>
@@ -96,6 +98,57 @@
       padding: 14px 24px; border-top: 1px solid #e6ebf2;
       text-align: right; background: #fff;
     }
+
+    /* ★★★ 深色模式（元宝风格优化版） ★★★ */
+    html.dark, html.dark body, html.dark #app { background: #141414 !important; color: #e0e0e0 !important; }
+    html.dark .main-layout, html.dark .top-header, html.dark .sidebar, html.dark .card, html.dark .panel-box, html.dark .modal, html.dark .settings-panel, html.dark .explain-modal { background: #1f1f1f !important; border-color: #333 !important; color: #e0e0e0 !important; }
+    html.dark .sidebar { background: #181818 !important; }
+    html.dark .top-header { background: #1f1f1f !important; border-bottom-color: #333 !important; }
+    html.dark .table th { background: #262626 !important; color: #fff !important; border-color: #333 !important; }
+    html.dark .table td { border-color: #333 !important; color: #e0e0e0 !important; }
+    html.dark .table tr:hover td { background: #2a2a2a !important; }
+    html.dark input, html.dark select, html.dark textarea, html.dark .form-input, html.dark .form-select { background: #262626 !important; color: #e0e0e0 !important; border-color: #444 !important; }
+    html.dark input::placeholder { color: #888 !important; }
+    html.dark .btn-primary { background: #1d4ed8 !important; color: #fff !important; border-color: #1d4ed8 !important; }
+    html.dark .btn-secondary { background: #333 !important; color: #e0e0e0 !important; border-color: #444 !important; }
+    html.dark .btn-secondary:hover { background: #3a3a3a !important; }
+    html.dark .tag--allow { background: #052e16 !important; color: #86efac !important; border-color: #166534 !important; }
+    html.dark .tag--deny { background: #450a0a !important; color: #fca5a5 !important; border-color: #7f1d1d !important; }
+    html.dark .tag--pending { background: #451a03 !important; color: #fdba74 !important; border-color: #9a3412 !important; }
+    html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 { color: #ffffff !important; }
+    html.dark .step-line { background: #444 !important; }
+    html.dark .step-line.active { background: #1d4ed8 !important; }
+    html.dark .step-name { color: #e0e0e0 !important; }
+    html.dark .step-desc { color: #a0a0a0 !important; }
+    html.dark [style*="background: #f8fafc"], html.dark [style*="background:#f8fafc"], html.dark [style*="background: #ffffff"], html.dark [style*="background:#ffffff"], html.dark [style*="background: rgb(248, 250, 252)"], html.dark [style*="background:rgb(248, 250, 252)"] { background: #2a2a2a !important; color: #e0e0e0 !important; border-color: #333 !important; }
+    html.dark [style*="color: #0f1e35"], html.dark [style*="color:#0f1e35"], html.dark [style*="color: #4a5a72"], html.dark [style*="color:#4a5a72"] { color: #e0e0e0 !important; }
+    html.dark [style*="color: #8894a8"], html.dark [style*="color:#8894a8"] { color: #a0a0a0 !important; }
+    html.dark .explain-modal__head, html.dark .explain-modal__foot { background: #1f1f1f !important; border-color: #333 !important; }
+    html.dark .explain-modal__body { background: #141414 !important; color: #e0e0e0 !important; }
+    html.dark .explain-modal__close { background: #333 !important; border-color: #444 !important; color: #cbd5e1 !important; }
+    html.dark .avatar-uploader { border-color: #444 !important; }
+    /* Logo 双图切换 */
+    html.dark .logo-light { display: none !important; }
+    html.dark .logo-dark { display: inline-block !important; filter: drop-shadow(0 0 6px rgba(29,78,216,0.4)); }
+    .logo-dark { display: none !important; }
+    /* 右上角用户区深色适配 */
+    html.dark .top-header > div:last-child > div:first-child { background: rgba(255,255,255,0.06) !important; border: 1px solid #3a3a3a !important; }
+    html.dark .top-header [style*="color: #0f1e35"] { color: #ffffff !important; }
+    /* 左下角用户区深色适配 */
+    html.dark .sidebar > div:last-child { background: rgba(255,255,255,0.04) !important; border-color: #333 !important; }
+    html.dark .sidebar > div:last-child [style*="color: #0f1e35"] { color: #ffffff !important; }
+    /* 右侧大屏浅蓝底 */
+    html.dark [style*="background: #eef4ff; border: 1px solid #d3e0ff"], html.dark [style*="background:#eef4ff;border:1px solid #d3e0ff"] { background: linear-gradient(160deg,#1b2a4a,#152036) !important; border-color: #2c3e63 !important; }
+    /* AI判定红块 */
+    html.dark [style*="background: #fdecea"] { background: #3a0d0d !important; border-color: #7f1d1d !important; color: #fca5a5 !important; }
+    /* ===== 用户昵称：由 CSS 控制深浅色 ===== */
+    .user-nickname { font-size: 13px; font-weight: 600; color: #0f1e35; }
+    html.dark .user-nickname { color: #ffffff !important; }
+    /* ===== 下拉菜单深色适配（避免白底白字） ===== */
+    html.dark .user-dropdown { background: #1f1f1f !important; border-color: #333 !important; box-shadow: 0 8px 24px rgba(0,0,0,.45) !important; }
+    html.dark .user-dropdown .menu-item { color: #e5e7eb !important; }
+    html.dark .user-dropdown .menu-item:hover { background: rgba(255,255,255,0.08) !important; color: #fff !important; }
+    html.dark .user-dropdown .menu-item.logout { color: #ff6b6b !important; }
   </style>
 </head>
 <body>
@@ -105,7 +158,8 @@
     <div v-if="currentPage === 'select-industry'" style="min-height: 100vh; width: 100vw; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f4f6fa; padding: 40px 20px;">
       <div style="text-align: center; width: 100%; max-width: 900px;">
         <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
-          <img src="aegisdata-logo-header.png" alt="AegisData" class="logo-img" style="margin-right: 16px;" />
+          <img src="aegisdata-logo-header.png" alt="AegisData" class="logo-img logo-light" style="margin-right: 16px;" />
+          <img src="aegisdata-logo-header - 2.png" alt="AegisData" class="logo-img logo-dark" style="margin-right: 16px;" />
         </div>
         <p style="color: #8894a8; font-size: 15px; margin: 0;">请选择您要审计的行业领域</p>
         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-top: 40px;">
@@ -125,7 +179,8 @@
     <div v-if="currentPage === 'login'" style="height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; background: #f4f6fa;">
       <div style="background: #fff; padding: 40px; border-radius: 16px; border: 1px solid #e6ebf2; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 380px;">
         <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 8px;">
-          <img src="aegisdata-logo-header.png" alt="AegisData" class="logo-img-sm" style="margin-right: 10px;" />
+          <img src="aegisdata-logo-header.png" alt="AegisData" class="logo-img-sm logo-light" style="margin-right: 10px;" />
+          <img src="aegisdata-logo-header - 2.png" alt="AegisData" class="logo-img-sm logo-dark" style="margin-right: 10px;" />
         </div>
         <p style="font-size: 14px; color: #8894a8; letter-spacing: 2px; margin-bottom: 32px; text-align: center;">AegisData 智能财务审计平台</p>
         <div style="margin-bottom: 18px;">
@@ -151,16 +206,17 @@
     <div v-else-if="currentPage === 'main'" class="main-layout">
       <div class="top-header">
         <div style="display: flex; align-items: center;">
-          <img src="aegisdata-logo-header.png" alt="AegisData" class="logo-img-xs" style="margin-right: 8px;" />
+          <img src="aegisdata-logo-header.png" alt="AegisData" class="logo-img-xs logo-light" style="margin-right: 8px;" />
+          <img src="aegisdata-logo-header - 2.png" alt="AegisData" class="logo-img-xs logo-dark" style="margin-right: 8px;" />
           <span style="width: 1px; height: 20px; background: #e6ebf2; margin: 0 12px;"></span>
           <span style="font-size: 14px; font-weight: 500; color: #8894a8;">AegisData 智能财务审计平台</span>
         </div>
         <div style="display: flex; align-items: center; gap: 16px;">
-          <div style="display: flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 4px 12px 4px 4px; border-radius: 99px; cursor: pointer;" @click="showUserMenu = !showUserMenu" v-click-outside="closeUserMenu">
-             <div style="width: 28px; height: 28px; border-radius: 50%; background: #1d4ed8; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px;">{{ nickname.charAt(0).toUpperCase() }}</div>
-             <div style="font-size: 13px; font-weight: 600; color: #0f1e35;">{{ nickname }}</div>
+          <div style="display: flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 4px 12px 4px 4px; border-radius: 999px; cursor: pointer;" @click="showUserMenu = !showUserMenu" v-click-outside="closeUserMenu">
+             <div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #1d4ed8, #6d28d9); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; box-shadow: 0 0 0 2px rgba(29,78,216,0.2);">{{ nickname.charAt(0).toUpperCase() }}</div>
+             <div class="user-nickname">{{ nickname }}</div>
           </div>
-          <div v-if="showUserMenu" style="position: fixed; top: 56px; right: 32px; width: 180px; background: #fff; border: 1px solid #e6ebf2; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.12); padding: 6px; z-index: 200;">
+          <div v-if="showUserMenu" class="user-dropdown" style="position: fixed; top: 56px; right: 32px; width: 180px; background: #fff; border: 1px solid #e6ebf2; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.12); padding: 6px; z-index: 200;">
             <div style="padding: 10px 12px; font-size: 13px; color: #4a5a72; cursor: pointer; border-radius: 6px;" @click="openSettings" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">👤 个人设置</div>
             <div style="padding: 10px 12px; font-size: 13px; color: #e5484d; cursor: pointer; border-radius: 6px;" @click="logout" onmouseover="this.style.background='#fdecea'" onmouseout="this.style.background='transparent'">🚪 退出登录</div>
           </div>
@@ -183,30 +239,28 @@
             </div>
             <div style="margin-bottom: 12px;">
               <div style="color: #8894a8; font-size: 12px; margin-bottom: 6px; font-weight: 600; padding: 0 24px;">本月项目</div>
-              <!-- ★ 改动：点击走 openProject -->
               <div v-for="proj in monthlyProjects" :key="proj.id" @click="openProject(proj, 'monthly')" style="padding: 8px 24px; color: #4a5a72; font-size: 14px; cursor: pointer; margin-bottom: 2px; display: flex; align-items: center;">
                 <span style="margin-right: 8px;">📁</span> <span style="white-space: nowrap;">{{ proj.name }}</span>
               </div>
             </div>
             <div style="margin-bottom: 12px;">
               <div style="color: #8894a8; font-size: 12px; margin-bottom: 6px; font-weight: 600; padding: 0 24px;">历史项目</div>
-              <!-- ★ 改动：点击走 openProject -->
               <div v-for="proj in historyProjects" :key="proj.id" @click="openProject(proj, 'history')" style="padding: 8px 24px; color: #4a5a72; font-size: 14px; cursor: pointer; margin-bottom: 2px; display: flex; align-items: center;">
                 <span style="margin-right: 8px;">🗂️</span> <span style="white-space: nowrap;">{{ proj.name }}</span>
               </div>
             </div>
           </div>
           <div style="padding: 16px 24px; border-top: 1px solid #e6ebf2; position: relative;" v-click-outside="closeLeftUserMenu">
-            <div style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 8px; border-radius: 8px; transition: background .2s;" 
+            <div style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 8px; border-radius: 20px; transition: background .2s;" 
                  @click="showLeftUserMenu = !showLeftUserMenu"
                  onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
-              <div style="width: 34px; height: 34px; border-radius: 50%; background: #1d4ed8; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; flex-shrink: 0;">{{ nickname.charAt(0).toUpperCase() }}</div>
+              <div style="width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #1d4ed8, #6d28d9); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; flex-shrink: 0; box-shadow: 0 0 0 2px rgba(29,78,216,0.2);">{{ nickname.charAt(0).toUpperCase() }}</div>
               <div style="flex: 1; min-width: 0;">
-                <div style="font-size: 14px; font-weight: 600; color: #0f1e35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ nickname }}</div>
+                <div class="user-nickname" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ nickname }}</div>
               </div>
               <span style="font-size: 12px; color: #8894a8;">⌄</span>
             </div>
-            <div v-if="showLeftUserMenu" style="position: absolute; left: 24px; bottom: 70px; width: 180px; background: #fff; border: 1px solid #e6ebf2; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.12); padding: 6px; z-index: 50;">
+            <div v-if="showLeftUserMenu" class="user-dropdown" style="position: absolute; left: 24px; bottom: 70px; width: 180px; background: #fff; border: 1px solid #e6ebf2; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.12); padding: 6px; z-index: 50;">
               <div style="padding: 10px 12px; font-size: 13px; color: #4a5a72; cursor: pointer; border-radius: 6px;" @click="openSettings" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">👤 个人设置</div>
               <div style="padding: 10px 12px; font-size: 13px; color: #e5484d; cursor: pointer; border-radius: 6px;" @click="logout" onmouseover="this.style.background='#fdecea'" onmouseout="this.style.background='transparent'">🚪 退出登录</div>
             </div>
@@ -569,5 +623,75 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script src="js/api.js"></script>
   <script src="js/app.js"></script>
+  <script>
+    // 仅提亮"文件解析完成！共 X 条记录"，其他绝对不动
+    function fixParseTextColor() {
+      if (!document.documentElement.classList.contains('dark')) return;
+      document.querySelectorAll('*').forEach(el => {
+        const txt = el.innerText || el.textContent || '';
+        if ((txt.includes('文件解析完成') || (txt.includes('条记录') && txt.includes('解析'))) && el.children.length === 0) {
+          if (!el.closest('[style*="background:#fff"]') && !el.closest('[style*="background: #fff"]') && !el.closest('[style*="background: white"]') && !el.closest('[style*="background-color: #fff"]')) {
+            el.style.color = '#ffffff';
+          }
+        }
+      });
+    }
+
+    // 页面加载后执行
+    setTimeout(fixParseTextColor, 800);
+
+    // 监听 DOM 变化（步骤切换时自动重新执行）
+    const observer = new MutationObserver(() => {
+      setTimeout(fixParseTextColor, 300);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  </script>
+<script>
+  function forceFixRedBox() {
+    // 遍历所有文本节点，避免 Vue 子节点拆分漏匹配
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+    let node;
+    while (node = walker.nextNode()) {
+      const txt = node.nodeValue.trim();
+      if (!txt) continue;
+      const parent = node.parentNode;
+      if (!parent || parent.children.length > 0) continue; // 只处理纯文本叶子
+
+      // 1. 右侧白底标题 / 左侧异常标签 -> 深黑
+      if (txt.includes('AI 数据关联与可视化洞察') || txt.includes('异常1') || txt.includes('异常2') || txt.includes('异常3')) {
+        parent.style.setProperty('color', '#111111', 'important');
+      }
+      // 2. 底部粉底 AI 判定 -> 深红黑
+      else if (txt.includes('AI 判定') || txt.includes('AI判定')) {
+        parent.style.setProperty('color', '#8B0000', 'important');
+      }
+    }
+  }
+  setTimeout(forceFixRedBox, 500);
+  setTimeout(forceFixRedBox, 1200); // 防 Vue 二次渲染
+  const obsRed = new MutationObserver(() => setTimeout(forceFixRedBox, 200));
+  obsRed.observe(document.body, { childList: true, subtree: true, characterData: true });
+</script>
+<script>
+  function fixAnomalyTagsBlack() {
+    document.querySelectorAll('*').forEach(el => {
+      const txt = el.innerText || el.textContent || '';
+      const trimTxt = txt.trim();
+      // 精准匹配：异常1、异常2、异常3（兼容“异常 1”带空格）
+      if (trimTxt === '异常1' || trimTxt === '异常2' || trimTxt === '异常3' || /^异常\s*\d+$/.test(trimTxt)) {
+        // 强制深黑色，穿透内联样式
+        el.style.setProperty('color', '#111111', 'important');
+      }
+    });
+  }
+  // 多次执行防 Vue 渲染延迟
+  setTimeout(fixAnomalyTagsBlack, 500);
+  setTimeout(fixAnomalyTagsBlack, 1200);
+  // DOM 变化自动重跑
+  const obsAnomaly = new MutationObserver(() => setTimeout(fixAnomalyTagsBlack, 200));
+  obsAnomaly.observe(document.body, { childList: true, subtree: true, characterData: true });
+</script>
+</body>
+</html>
 </body>
 </html>
