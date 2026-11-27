@@ -14,21 +14,21 @@ createApp({
     // ===== 页面状态 =====
     const currentPage = ref('select-industry');
     const industries = ref([
-      { name: '制造业', icon: '🏭' },
-      { name: '金融业', icon: '🏦' },
-      { name: '信息技术', icon: '💻' },
-      { name: '批发零售', icon: '🛒' },
-      { name: '能源化工', icon: '⚡' },
-      { name: '医疗健康', icon: '🏥' },
-      { name: '建筑地产', icon: '🏗️' },
-      { name: '交通运输', icon: '🚚' },
-      { name: '教育文化', icon: '🎓' },
-      { name: '农业食品', icon: '🌾' },
-      { name: '餐饮住宿', icon: '🍜' },
-      { name: '文体娱乐', icon: '🎬' },
-      { name: '公共管理', icon: '🏛️' },
-      { name: '科学研究', icon: '🔬' },
-      { name: '居民服务', icon: '🧰' }
+      { name: '汽车制造', icon: '🚗' },
+      { name: '电子元器件', icon: '🔌' },
+      { name: '半导体芯片', icon: '💾' },
+      { name: '机械设备', icon: '⚙️' },
+      { name: '钢铁冶炼', icon: '🏗️' },
+      { name: '有色金属', icon: '🔩' },
+      { name: '石油化工', icon: '🛢️' },
+      { name: '医药制造', icon: '💊' },
+      { name: '食品加工', icon: '🍞' },
+      { name: '纺织服装', icon: '🧵' },
+      { name: '家电制造', icon: '📺' },
+      { name: '航空航天', icon: '✈️' },
+      { name: '船舶制造', icon: '🚢' },
+      { name: '新能源电池', icon: '🔋' },
+      { name: '医疗器械', icon: '🩺' }
     ]);
     const selectedIndustry = ref({ name: '' });
     const nickname = ref('普通用户');
@@ -63,6 +63,7 @@ createApp({
     const showExplainModal = ref(false);
     const explainLoading = ref(false);
     const explainText = ref('');
+    const explainData = ref(null); // ★ 新增：结构化卡片数据
     const toastMsg = ref('');
     const loginAccount = ref('');
     const password = ref('');
@@ -72,7 +73,6 @@ createApp({
 
     const showToast = (msg) => { toastMsg.value = msg; setTimeout(() => toastMsg.value = '', 1800); };
 
-    // ★★★ 新增：页面加载时恢复深色模式 ★★★
     const darkMode = ref(false);
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
@@ -191,7 +191,15 @@ createApp({
         window._aiTimer = null;
         aiAnalysisComplete.value = true;
         aiElapsedTime.value = Math.floor((Date.now() - startTime) / 1000);
-        currentRecords.value = Array.from({ length: (res && res.analyzedCount) || 12840 }, (_, i) => ({ id: i + 1 }));
+        currentRecords.value = Array.from({ length: (res && res.analyzedCount) || 12840 }, (_, i) => ({
+          id: i + 1,
+          department: ['采购部', '财务部', '销售部', '研发部', '行政部'][i % 5],
+          supplier: ['供应商A', '供应商B', '供应商C', '供应商D', '供应商E'][i % 5],
+          riskLevel: ['高', '中', '低'][i % 3],
+          amount: Math.floor(Math.random() * 50000) + 1000,
+          date: '2025-01-' + String((i % 28) + 1).padStart(2, '0'),
+          type: ['付款', '收款', '转账', '报销'][i % 4]
+        }));
         currentAnomalies.value = (res && res.list) ? res.list : Array.from({ length: 8 }, (_, i) => ({
           id: i + 1,
           field: ['金额异常', '频次异常', '时间异常', '关联方异常'][i % 4],
@@ -239,11 +247,37 @@ createApp({
     function goToReport() { currentStep.value = 4; }
     function toggleEvidence(id) { expandedAnomalyId.value = expandedAnomalyId.value === id ? null : id; }
 
+    // ★ 重写：handleExplain（支持结构化JSON + 纯文本兜底）
     function handleExplain(id, a) {
       showExplainModal.value = true;
       document.body.style.overflow = 'hidden';
-      explainLoading.value = true; explainText.value = '';
-      setTimeout(() => { explainLoading.value = false; explainText.value = '该异常主要源于交易金额与历史均值偏离超过 3 个标准差，且对应凭证缺失。'; }, 600);
+      explainLoading.value = true;
+      explainText.value = '';
+      explainData.value = null;
+
+      setTimeout(() => {
+        explainLoading.value = false;
+
+        // ★ 模拟结构化数据（联调时删掉，改从 api 拿）
+        const mockJson = {
+          overview: '32笔完全重复（日期+金额+科目+经办人），暂定中风险。金额缺失待核实。',
+          risks: [
+            { title: '重复报销/入账', desc: '可能为同一票据多次报销或系统重复推送，存在资金损失风险。' },
+            { title: '内控失效', desc: '同经办人集中同要素记录，审核/查重未有效执行。' },
+            { title: '数据质量', desc: '金额0.0、对手方缺失，影响风险敞口量化与税务合规。' }
+          ],
+          suggestion: '暂停付款 → 调原始凭证/审批流 → 排查系统重复导入 → 落实"先核查后付款"。',
+          conclusion: '维持中风险；确认无真实业务支撑则上调高风险。'
+        };
+
+        // ★ 联调时：
+        // window.api.explain(id).then(res => {
+        //   if (res && res.overview) { explainData.value = res; }
+        //   else { explainText.value = res.text || res; }
+        // });
+
+        explainData.value = mockJson; // 临时 mock，联调时删
+      }, 600);
     }
 
     function closeExplainModal() {
@@ -253,51 +287,243 @@ createApp({
 
     function openChartModal() { showChartModal.value = true; setTimeout(renderCharts, 100); }
 
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    // ★ 核心改动1：数据聚合函数
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    function aggregateData(dimension, metric, options = {}) {
+      const records = currentRecords.value;
+      if (!records || records.length === 0) {
+        return { categories: ['无数据'], values: [0] };
+      }
+
+      const { aggregate = 'sum', sort = 'desc', topN = 0 } = options;
+
+      const groupMap = {};
+      records.forEach(r => {
+        const key = r[dimension] || '未知';
+        if (!groupMap[key]) groupMap[key] = [];
+        groupMap[key].push(r);
+      });
+
+      let result = Object.entries(groupMap).map(([key, group]) => {
+        let value = 0;
+        if (aggregate === 'count') {
+          value = group.length;
+        } else if (aggregate === 'avg') {
+          const sum = group.reduce((s, r) => s + (parseFloat(r[metric]) || 0), 0);
+          value = group.length > 0 ? sum / group.length : 0;
+        } else if (aggregate === 'ratio') {
+          value = (group.length / records.length * 100);
+        } else {
+          value = group.reduce((s, r) => s + (parseFloat(r[metric]) || 0), 0);
+        }
+        return { name: key, value: Math.round(value * 100) / 100 };
+      });
+
+      result.sort((a, b) => sort === 'desc' ? b.value - a.value : a.value - b.value);
+
+      if (topN > 0 && result.length > topN) {
+        result = result.slice(0, topN);
+      }
+
+      return {
+        categories: result.map(r => r.name),
+        values: result.map(r => r.value)
+      };
+    }
+
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    // ★ 核心改动2：generateCustomChart 全面重写
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
     async function generateCustomChart() {
       if (!aiChartMessage.value.trim()) return showToast('请输入你想生成图表的描述');
       isAiGenerating.value = true;
       try {
         const res = await window.api.charts(aiChartMessage.value);
-        const chartType = res.chartType || res.type || 'bar';
-        const title = res.title || res.chartTitle || res.name || 'AI 智能生成';
-        const aiColor = res.color || res.themeColor || res.series_color || '#1d4ed8';
-        const xData = res.xData || res.xAxis || res.categories || ['企业1', '企业2', '企业3', '企业4'];
-        const yData = res.yData || res.yAxis || res.data || res.values || [120, 200, 150, 80];
+
+        const intent = {
+          chartType: res.chartType || 'bar',
+          dimension: res.dimension || 'department',
+          metric: res.metric || 'amount',
+          title: res.title || 'AI 智能生成图表',
+          subTitle: res.subTitle || '',
+          color: res.color || '',
+          theme: res.theme || 'light',
+          colorMode: res.colorMode || 'single',
+          gradient: res.gradient || null,
+          opacity: res.opacity !== undefined ? res.opacity : 0.8,
+          borderRadius: res.borderRadius || 0,
+          legend: res.legend !== undefined ? res.legend : true,
+          stack: res.stack || false,
+          smooth: res.smooth || false,
+          label: res.label || { show: false },
+          aggregate: res.aggregate || 'sum',
+          topN: res.topN || 0,
+          sort: res.sort || 'desc',
+          filter: res.filter || null,
+          timeGranularity: res.timeGranularity || ''
+        };
+
+        if (intent.filter) {
+          const { field, op, value } = intent.filter;
+          currentRecords.value = currentRecords.value.filter(r => {
+            const rv = parseFloat(r[field]) || 0;
+            const v = parseFloat(value) || 0;
+            if (op === '>') return rv > v;
+            if (op === '<') return rv < v;
+            if (op === '=') return rv == v;
+            if (op === '>=') return rv >= v;
+            if (op === '<=') return rv <= v;
+            return true;
+          });
+        }
+
+        const aggregated = aggregateData(intent.dimension, intent.metric, {
+          aggregate: intent.aggregate,
+          sort: intent.sort,
+          topN: intent.topN
+        });
+
+        let colorList = ['#5470C6', '#91CC75', '#FAC858', '#EE6666', '#73C0DE', '#3BA272', '#FC8452', '#9A60B4'];
+        if (intent.color) {
+          if (intent.colorMode === 'single') {
+            colorList = [intent.color];
+          } else if (intent.colorMode === 'gradient' && intent.gradient) {
+            colorList = [intent.color];
+          } else if (Array.isArray(intent.color)) {
+            colorList = intent.color;
+          } else {
+            colorList = [intent.color];
+          }
+        }
 
         const chartDom = document.getElementById('modalChart4');
-        if (chartDom) {
-          const chart = echarts.getInstanceByDom(chartDom) || echarts.init(chartDom);
-          chart.clear();
-          let option = {};
-          if (chartType === 'pie') {
-            option = {
-              title: { text: title, left: 'center', textStyle: { fontSize: 16 } },
-              tooltip: { trigger: 'item' },
-              legend: { top: 'bottom' },
-              series: [{
-                type: 'pie', radius: ['40%', '70%'],
-                data: xData.map((name, i) => ({ name, value: (yData[i] || 0) })),
-                itemStyle: { color: aiColor }
-              }]
-            };
-          } else {
-            option = {
-              title: { text: title, textStyle: { fontSize: 16 } },
-              tooltip: { trigger: 'axis' },
-              xAxis: { type: 'category', data: xData },
-              yAxis: { type: 'value' },
-              series: [{
-                type: chartType,
-                data: yData,
-                smooth: chartType === 'line',
-                itemStyle: { color: aiColor },
-                lineStyle: chartType === 'line' ? { color: aiColor } : undefined
-              }]
-            };
-          }
-          chart.setOption(option, true);
-          showToast('AI 已为您更新图表：' + title);
+        if (!chartDom) { isAiGenerating.value = false; return; }
+
+        const chart = echarts.getInstanceByDom(chartDom) || echarts.init(chartDom);
+        chart.clear();
+
+        let option = {};
+
+        if (intent.chartType === 'pie') {
+          const pieData = aggregated.categories.map((name, i) => ({
+            name,
+            value: aggregated.values[i] || 0
+          }));
+
+          option = {
+            title: {
+              text: intent.title,
+              subtext: intent.subTitle,
+              left: 'center',
+              textStyle: { fontSize: 16 }
+            },
+            tooltip: {
+              trigger: 'item',
+              formatter: '{b}: {c} ({d}%)'
+            },
+            legend: intent.legend ? { top: 'bottom' } : { show: false },
+            color: colorList,
+            series: [{
+              type: 'pie',
+              radius: intent.colorMode === 'gradient' ? ['40%', '70%'] : '60%',
+              data: pieData,
+              label: intent.label.show
+                ? { show: true, position: intent.label.position || 'outside', formatter: '{b}: {d}%' }
+                : { show: false },
+              itemStyle: intent.colorMode === 'gradient' && intent.gradient
+                ? {
+                    color: {
+                      type: 'linear',
+                      x: 0, y: 0, x2: 0, y2: 1,
+                      colorStops: [
+                        { offset: 0, color: intent.gradient.from },
+                        { offset: 1, color: intent.gradient.to }
+                      ]
+                    },
+                    borderRadius: intent.borderRadius,
+                    opacity: intent.opacity
+                  }
+                : {
+                    borderRadius: intent.borderRadius,
+                    opacity: intent.opacity
+                  }
+            }]
+          };
+
+        } else if (intent.chartType === 'area') {
+          option = {
+            title: {
+              text: intent.title,
+              subtext: intent.subTitle,
+              textStyle: { fontSize: 16 }
+            },
+            tooltip: { trigger: 'axis' },
+            legend: intent.legend ? { data: [intent.metric] } : { show: false },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: {
+              type: 'category',
+              data: aggregated.categories,
+              axisLabel: { rotate: aggregated.categories.length > 6 ? 45 : 0 }
+            },
+            yAxis: { type: 'value' },
+            color: colorList,
+            series: [{
+              name: intent.metric,
+              type: 'line',
+              data: aggregated.values,
+              smooth: intent.smooth,
+              areaStyle: {
+                opacity: intent.opacity
+              },
+              lineStyle: { width: 2 },
+              itemStyle: {
+                borderRadius: intent.borderRadius
+              }
+            }]
+          };
+
+        } else {
+          option = {
+            title: {
+              text: intent.title,
+              subtext: intent.subTitle,
+              textStyle: { fontSize: 16 }
+            },
+            tooltip: { trigger: 'axis' },
+            legend: intent.legend ? { data: [intent.metric] } : { show: false },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            dataZoom: aggregated.categories.length > 10 ? [{ type: 'inside' }] : undefined,
+            xAxis: {
+              type: 'category',
+              data: aggregated.categories,
+              axisLabel: {
+                rotate: aggregated.categories.length > 6 ? 45 : 0
+              }
+            },
+            yAxis: { type: 'value' },
+            color: colorList,
+            series: [{
+              name: intent.metric,
+              type: intent.chartType,
+              data: aggregated.values,
+              smooth: intent.smooth,
+              stack: intent.stack ? 'total' : undefined,
+              label: intent.label.show
+                ? { show: true, position: intent.label.position || 'top' }
+                : { show: false },
+              itemStyle: {
+                borderRadius: intent.chartType === 'bar' ? intent.borderRadius : 0,
+                opacity: intent.opacity
+              },
+              lineStyle: intent.chartType === 'line' ? { width: 2 } : undefined
+            }]
+          };
         }
+
+        chart.setOption(option, true);
+        showToast('AI 已为您生成图表：' + intent.title);
+
       } catch (e) {
         showToast('AI 生成图表失败：' + (e.message || '网络错误'));
       } finally {
@@ -399,33 +625,30 @@ createApp({
       reader.readAsDataURL(file);
     }
 
-    // ★★★ 改动：saveSettings 加入深色模式切换 + 内联白底清理 ★★★
+    function saveSettings() {
+      if (
+        settingsTab.value === 'security' &&
+        newPassword.value &&
+        newPassword.value !== confirmPassword.value
+      ) {
+        return showToast('两次密码不一致');
+      }
 
-function saveSettings() {
-  if (
-    settingsTab.value === 'security' &&
-    newPassword.value &&
-    newPassword.value !== confirmPassword.value
-  ) {
-    return showToast('两次密码不一致');
-  }
+      if (darkMode.value) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
 
-  // 统一切换深色 / 浅色主题
-  if (darkMode.value) {
-    document.documentElement.classList.add('dark');
-    localStorage.setItem('theme', 'dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-    localStorage.setItem('theme', 'light');
-  }
+      showToast('保存成功');
+      showSettingsModal.value = false;
 
-  showToast('保存成功');
-  showSettingsModal.value = false;
-
-  oldPassword.value = '';
-  newPassword.value = '';
-  confirmPassword.value = '';
-}
+      oldPassword.value = '';
+      newPassword.value = '';
+      confirmPassword.value = '';
+    }
 
     return {
       currentPage, industries, selectedIndustry, nickname, showUserMenu, showLeftUserMenu,
@@ -433,7 +656,7 @@ function saveSettings() {
       currentStep, originalRecords, currentRecords, currentAnomalies, activeReceipt, expandedAnomalyId,
       filterMessage, filterExplanation, showFilterResult, currentConditions, filterMatchCount,
       aiAnalysisComplete, aiElapsedTime, aiTasks, activeAiTaskIndex, suggestionsData,
-      showChartModal, aiChartMessage, isAiGenerating, isExporting, isDownloading, showExplainModal, explainLoading, explainText,
+      showChartModal, aiChartMessage, isAiGenerating, isExporting, isDownloading, showExplainModal, explainLoading, explainText, explainData,
       toastMsg, loginAccount, password, errorMsg, logging, showSettingsModal,
       selectIndustry, handleLogin, logout, closeUserMenu, closeLeftUserMenu, createProject, openProject, resetWorkflow,
       handleUploadAndGoFilter, handleFilter, skipFilter, onConditionChange, confirmFilter, resetFilterInput,

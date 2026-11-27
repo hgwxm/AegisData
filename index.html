@@ -600,23 +600,60 @@
       </div>
     </div>
 
-    <!-- AI解读弹窗 -->
-    <div v-if="showExplainModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100;" @click.self="closeExplainModal">
-      <div class="card explain-modal">
-        <div class="explain-modal__head">
-          <h3>🤖 AI 解读</h3>
-          <button class="explain-modal__close" @click="closeExplainModal">✕</button>
-        </div>
-        <div class="explain-modal__body">
-          <p v-if="explainLoading" style="color: #8894a8; margin: 0;">AI 正在解读…</p>
-          <p v-else style="margin: 0;">{{ explainText }}</p>
-        </div>
-        <div class="explain-modal__foot">
-          <button class="btn-secondary" @click="closeExplainModal">关闭</button>
-        </div>
-      </div>
+    <<!-- AI解读弹窗 -->
+<div v-if="showExplainModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100;" @click.self="closeExplainModal">
+  <div class="card explain-modal">
+    <div class="explain-modal__head">
+      <h3>🤖 AI 解读</h3>
+      <button class="explain-modal__close" @click="closeExplainModal">✕</button>
     </div>
+    <div class="explain-modal__body">
 
+      <!-- 加载中 -->
+      <p v-if="explainLoading" style="color: #8894a8; margin: 0;">AI 正在解读…</p>
+
+      <!-- 方案B：结构化卡片（后端返JSON时走这里） -->
+      <template v-else-if="explainData && explainData.overview">
+        <!-- 概述卡片 -->
+        <div class="explain-card explain-card--overview">
+          <div class="explain-card__tag explain-tag--warn">异常概述</div>
+          <p class="explain-card__text">{{ explainData.overview }}</p>
+        </div>
+
+        <!-- 风险点卡片 -->
+        <div class="explain-card" v-if="explainData.risks && explainData.risks.length">
+          <h4 class="explain-card__title">⚠️ 主要风险点</h4>
+          <div class="explain-risk-item" v-for="(r, idx) in explainData.risks" :key="idx">
+            <span class="explain-risk-item__dot"></span>
+            <div>
+              <strong class="explain-risk-item__title">{{ r.title }}</strong>
+              <p class="explain-risk-item__desc">{{ r.desc }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 处置建议卡片 -->
+        <div class="explain-card explain-card--suggest" v-if="explainData.suggestion">
+          <h4 class="explain-card__title">✅ 处置建议</h4>
+          <p class="explain-card__text">{{ explainData.suggestion }}</p>
+        </div>
+
+        <!-- 结论卡片 -->
+        <div class="explain-card explain-card--conclusion" v-if="explainData.conclusion">
+          <h4 class="explain-card__title">📌 结论</h4>
+          <p class="explain-card__text">{{ explainData.conclusion }}</p>
+        </div>
+      </template>
+
+      <!-- 兜底：后端还没改，仍返纯文本时走这里 -->
+      <p v-else style="margin: 0; white-space: pre-wrap; line-height: 1.8;">{{ explainText }}</p>
+
+    </div>
+    <div class="explain-modal__foot">
+      <button class="btn-secondary" @click="closeExplainModal">关闭</button>
+    </div>
+  </div>
+</div>
     <div v-if="toastMsg" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.75); color: #fff; padding: 12px 24px; border-radius: 8px; font-size: 14px; z-index: 9999;">{{ toastMsg }}</div>
   </div>
 
